@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merlin's Media Archive</title>
+    <meta name="theme-color" content="#7e22ce">
+    <style>
+        :root {
+            --bg: #0f0f23;
+            --card: #1a1a2e;
+            --text: #e0e0ff;
+            --muted: rgba(224, 224, 255, 0.65);
+            --accent: #7e22ce;
+            --accent-hover: #9333ea;
+            --green: #10b981;
+            --red: #b91c1c;
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.28);
+            --radius: 14px;
+            --magical-glow: 0 0 15px rgba(126, 34, 206, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(126, 34, 206, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(126, 34, 206, 0.1) 0%, transparent 20%);
+        }
+
+        .magical-border {
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .magical-border::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        header {
+            background: var(--card);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--magical-glow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .merlin-icon {
+            font-size: 28px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #e0e0ff, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(192, 132, 252, 0.3);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            margin-bottom: 16px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #c084fc;
+        }
+
+        .input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text);
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: var(--magical-glow);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            box-shadow: var(--magical-glow);
+            transform: translateY(-2px);
+        }
+
+        .btn-green {
+            background: var(--green);
+        }
+
+        .btn-green:hover {
+            background: #0da271;
+        }
+
+        .btn:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .folders-empty {
+            color: var(--muted);
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .folder-section {
+            border: 1px dashed var(--card-border);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            margin-top: 12px;
+        }
+
+        .folder-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .folder-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .folder-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .folder-title {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .folder-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .action {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: inherit;
+            border-radius: 8px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .action:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .main {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            min-height: 600px;
+        }
+
+        .topbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text);
+        }
+
+        .search input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: var(--magical-glow);
+        }
+
+        #sortBtn, #backToMain {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #sortBtn:hover, #backToMain:hover {
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: var(--magical-glow);
+        }
+
+        .empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            color: var(--muted);
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .media-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .media-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--magical-glow);
+        }
+
+        .thumb {
+            width: 100%;
+            height: 150px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .thumb img, .thumb video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .item-info {
+            padding: 12px;
+        }
+
+        .item-info h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .badge {
+            font-size: 10px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 999px;
+            padding: 2px 8px;
+        }
+
+        .item-actions {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .item-btn {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: inherit;
+            border-radius: 8px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .item-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .reddit-preview {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            display: none;
+        }
+
+        .reddit-preview img, .reddit-preview video {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .preview-info {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .toast {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            background: rgba(35, 42, 61, 0.95);
+            color: #e6eef9;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            pointer-events: none;
+            z-index: 10000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .viewer {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .viewer.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .viewer-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            margin: 0 auto;
+            padding: 0 12px;
+        }
+
+        .viewer-topbar {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            backdrop-filter: blur(12px);
+        }
+
+        #viewerVideo, #viewerImage {
+            display: block;
+            margin: 0 auto;
+            max-width: 92vw;
+            max-height: 84vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+            background: #000;
+        }
+
+        #viewerImage {
+            object-fit: contain;
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            animation: sparkle 2s linear forwards;
+        }
+
+        @keyframes sparkle {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx, 0), var(--ty, 0)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header class="magical-border">
+        <div class="header-left">
+            <div class="merlin-icon">🧙‍♂️</div>
+            <h1>Merlin's Media Archive</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="card magical-border">
+                <h3>📦 Create Folder</h3>
+                <input id="newFolderName" class="input" placeholder="New folder name">
+                <button id="addFolder" class="btn">📁 Add Folder</button>
+            </div>
+
+            <div class="card magical-border">
+                <h3>🏠 Main Library</h3>
+                <div class="breadcrumb">Viewing: <span id="viewLabel">Main Library</span></div>
+                <div id="foldersEmpty" class="folders-empty">No folders yet. Create one below!</div>
+                <div id="foldersContainer"></div>
+            </div>
+
+            <div class="card magical-border">
+                <h3>➕ Add Media</h3>
+                <input id="videoInput" type="file" accept="video/*" multiple style="display:none">
+                <button id="addVideos" class="btn">🎥 Add Videos</button>
+                <input id="photoInput" type="file" accept="image/*" multiple style="display:none">
+                <button id="addPhotos" class="btn btn-green">📷 Add Photos</button>
+                <div style="margin-top:6px;text-align:center;font-size:12px;color:var(--muted)">
+                    Supports MP4, WebM, MOV, JPG, PNG, GIF
+                </div>
+            </div>
+
+            <div class="card magical-border">
+                <h3>🔮 Reddit Media Downloader</h3>
+                <input id="redditUrl" class="input" placeholder="Paste Reddit URL here">
+                <button id="fetchReddit" class="btn">Fetch Media</button>
+                
+                <div id="redditPreview" class="reddit-preview">
+                    <h3 style="margin-bottom:8px">🎞️ Preview</h3>
+                    <div id="redditMediaBox" style="text-align:center"></div>
+                    <div class="preview-info" id="previewInfo"></div>
+                </div>
+                
+                <button id="saveFromReddit" class="btn" style="display:none">⬇️ Download to Library</button>
+            </div>
+
+            <div class="card magical-border">
+                <h3>📤 Import / Export</h3>
+                <button id="exportLibrary" class="btn" style="margin-bottom:8px">⬇️ Export Library</button>
+                <button id="importLibrary" class="btn btn-green">📦 Import Library</button>
+                <div style="margin-top:6px;text-align:center;font-size:12px;color:var(--muted)">
+                    Export creates a backup. Import restores from backup.
+                </div>
+            </div>
+        </div>
+
+        <div class="main magical-border">
+            <div class="topbar">
+                <div class="search">
+                    <input id="search" placeholder="🔍 Search media...">
+                </div>
+                <button id="sortBtn">📅 Sort: Newest</button>
+                <button id="backToMain" class="ghost" style="display:none">🏠 Back to Main</button>
+            </div>
+            <div id="mainEmpty" class="empty">
+                No media yet. Add some videos or photos to get started!
+            </div>
+            <div id="mainList" class="media-grid" style="display:none"></div>
+        </div>
+    </div>
+
+    <!-- Viewer -->
+    <div id="viewer" class="viewer" aria-hidden="true">
+        <div class="viewer-inner">
+            <div class="viewer-topbar">
+                <button id="viewerPrev" class="ghost" aria-label="Previous">⏮</button>
+                <span id="viewerFilename" class="title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%">🎞️ </span>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <button id="viewerNext" class="ghost" aria-label="Next">⏭</button>
+                    <button id="viewerClose" class="ghost" aria-label="Close">❌</button>
+                </div>
+            </div>
+            <video id="viewerVideo" playsinline controls preload="metadata"></video>
+            <img id="viewerImage" alt="Image preview" />
+        </div>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script>
+        // State management
+        const LS_KEY = 'merlin_media_archive';
+        let state = {
+            folders: [],
+            media: [],
+            activeFolderId: '',
+            sort: 'newest'
+        };
+
+        // Load state from localStorage
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(LS_KEY);
+                if (saved) {
+                    state = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('Failed to load state:', e);
+            }
+        }
+
+        // Save state to localStorage
+        function saveState() {
+            try {
+                localStorage.setItem(LS_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.error('Failed to save state:', e);
+            }
+        }
+
+        // Generate unique ID
+        function uid(prefix) {
+            return prefix + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Show toast message
+        function showToast(msg, ms = 2600) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), ms);
+        }
+
+        // Create sparkle effect
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.style.left = x + 'px';
+            sparkle.style.top = y + 'px';
+            sparkle.style.setProperty('--tx', (Math.random() * 100 - 50) + 'px');
+            sparkle.style.setProperty('--ty', (Math.random() * 100 - 50) + 'px');
+            document.body.appendChild(sparkle);
+            setTimeout(() => sparkle.remove(), 2000);
+        }
+
+        // Add sparkle effect to buttons on click
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                createSparkle(e.clientX, e.clientY);
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadState();
+            renderFolders();
+            renderMain();
+            
+            // Add folder
+            document.getElementById('addFolder').addEventListener('click', function() {
+                const nameInput = document.getElementById('newFolderName');
+                const name = nameInput.value.trim();
+                if (!name) return;
+                
+                const folder = {
+                    id: uid('folder'),
+                    name: name,
+                    parentId: state.activeFolderId || ''
+                };
+                
+                state.folders.push(folder);
+                saveState();
+                nameInput.value = '';
+                renderFolders();
+                showToast('Folder created successfully!');
+            });
+            
+            // Add videos
+            document.getElementById('addVideos').addEventListener('click', function() {
+                document.getElementById('videoInput').click();
+            });
+            
+            document.getElementById('videoInput').addEventListener('change', function(e) {
+                handleFiles(e.target.files, 'video');
+                e.target.value = '';
+            });
+            
+            // Add photos
+            document.getElementById('addPhotos').addEventListener('click', function() {
+                document.getElementById('photoInput').click();
+            });
+            
+            document.getElementById('photoInput').addEventListener('change', function(e) {
+                handleFiles(e.target.files, 'photo');
+                e.target.value = '';
+            });
+            
+            // Search
+            document.getElementById('search').addEventListener('input', renderMain);
+            
+            // Sort
+            document.getElementById('sortBtn').addEventListener('click', function() {
+                state.sort = state.sort === 'newest' ? 'oldest' : 'newest';
+                this.textContent = state.sort === 'newest' ? '📅 Sort: Newest' : '📅 Sort: Oldest';
+                saveState();
+                renderMain();
+            });
+            
+            // Back to main
+            document.getElementById('backToMain').addEventListener('click', function() {
+                state.activeFolderId = '';
+                renderFolders();
+                renderMain();
+            });
+            
+            // Fetch Reddit media
+            document.getElementById('fetchReddit').addEventListener('click', fetchRedditMedia);
+            
+            // Save from Reddit
+            document.getElementById('saveFromReddit').addEventListener('click', saveFromReddit);
+            
+            // Viewer controls
+            document.getElementById('viewerClose').addEventListener('click', closeViewer);
+            document.getElementById('viewerPrev').addEventListener('click', prevMedia);
+            document.getElementById('viewerNext').addEventListener('click', nextMedia);
+            
+            // Close viewer when clicking outside
+            document.getElementById('viewer').addEventListener('click', function(e) {
+                if (e.target === this) closeViewer();
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (document.getElementById('viewer').classList.contains('show')) {
+                    if (e.key === 'Escape') closeViewer();
+                    if (e.key === 'ArrowLeft') prevMedia();
+                    if (e.key === 'ArrowRight') nextMedia();
+                }
+            });
+        });
+
+        // Handle file uploads
+        function handleFiles(files, type) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const media = {
+                        id: uid('media'),
+                        name: file.name,
+                        type: type,
+                        dataUrl: e.target.result,
+                        createdAt: Date.now(),
+                        folderId: state.activeFolderId || ''
+                    };
+                    
+                    state.media.push(media);
+                    saveState();
+                    renderMain();
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            showToast(`${files.length} ${type}${files.length > 1 ? 's' : ''} added successfully!`);
+        }
+
+        // Render folders
+        function renderFolders() {
+            const container = document.getElementById('foldersContainer');
+            const emptyMsg = document.getElementById('foldersEmpty');
+            const viewLabel = document.getElementById('viewLabel');
+            const backBtn = document.getElementById('backToMain');
+            
+            container.innerHTML = '';
+            
+            if (state.folders.length === 0) {
+                emptyMsg.style.display = 'block';
+            } else {
+                emptyMsg.style.display = 'none';
+                
+                // Filter folders for current parent
+                const folders = state.folders.filter(f => 
+                    (state.activeFolderId && f.parentId === state.activeFolderId) || 
+                    (!state.activeFolderId && !f.parentId)
+                );
+                
+                folders.forEach(folder => {
+                    const section = document.createElement('div');
+                    section.className = 'folder-section';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'folder-header';
+                    
+                    const left = document.createElement('div');
+                    left.className = 'folder-left';
+                    left.innerHTML = `
+                        <span class="folder-title">📁 ${folder.name}</span>
+                        <span class="folder-count">(${getFolderItemCount(folder.id)})</span>
+                    `;
+                    
+                    const actions = document.createElement('div');
+                    actions.className = 'folder-actions';
+                    actions.innerHTML = `
+                        <button class="action" onclick="renameFolder('${folder.id}')">✏️</button>
+                        <button class="action" onclick="deleteFolder('${folder.id}')">🗑️</button>
+                    `;
+                    
+                    header.appendChild(left);
+                    header.appendChild(actions);
+                    
+                    header.addEventListener('click', function() {
+                        state.activeFolderId = folder.id;
+                        viewLabel.textContent = folder.name;
+                        backBtn.style.display = 'inline-block';
+                        renderFolders();
+                        renderMain();
+                    });
+                    
+                    section.appendChild(header);
+                    container.appendChild(section);
+                });
+            }
+            
+            // Update view label and back button
+            if (state.activeFolderId) {
+                const folder = state.folders.find(f => f.id === state.activeFolderId);
+                viewLabel.textContent = folder ? folder.name : 'Unknown Folder';
+                backBtn.style.display = 'inline-block';
+            } else {
+                viewLabel.textContent = 'Main Library';
+                backBtn.style.display = 'none';
+            }
+        }
+
+        // Get item count in folder
+        function getFolderItemCount(folderId) {
+            return state.media.filter(m => m.folderId === folderId).length;
+        }
+
+        // Render main media grid
+        function renderMain() {
+            const emptyMsg = document.getElementById('mainEmpty');
+            const grid = document.getElementById('mainList');
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            
+            // Filter media
+            let media = state.media.filter(m => 
+                (state.activeFolderId ? m.folderId === state.activeFolderId : !m.folderId) &&
+                (m.name.toLowerCase().includes(searchTerm))
+            );
+            
+            // Sort media
+            if (state.sort === 'newest') {
+                media.sort((a, b) => b.createdAt - a.createdAt);
+            } else {
+                media.sort((a, b) => a.createdAt - b.createdAt);
+            }
+            
+            grid.innerHTML = '';
+            
+            if (media.length === 0) {
+                emptyMsg.style.display = 'flex';
+                grid.style.display = 'none';
+            } else {
+                emptyMsg.style.display = 'none';
+                grid.style.display = 'grid';
+                
+                media.forEach(item => {
+                    const mediaItem = document.createElement('div');
+                    mediaItem.className = 'media-item';
+                    
+                    mediaItem.innerHTML = `
+                        <div class="thumb">
+                            ${item.type === 'photo' ? 
+                                `<img src="${item.dataUrl}" alt="${item.name}">` : 
+                                `<video src="${item.dataUrl}" muted></video>`
+                            }
+                        </div>
+                        <div class="item-info">
+                            <h4>${item.name}</h4>
+                            <div class="item-meta">
+                                <span>${new Date(item.createdAt).toLocaleDateString()}</span>
+                                <span class="badge">${item.type.toUpperCase()}</span>
+                            </div>
+                            <div class="item-actions">
+                                <button class="item-btn" onclick="renameMedia('${item.id}')">✏️</button>
+                                <button class="item-btn" onclick="deleteMedia('${item.id}')">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    mediaItem.addEventListener('click', function() {
+                        openViewer(item);
+                    });
+                    
+                    grid.appendChild(mediaItem);
+                });
+            }
+        }
+
+        // Folder actions
+        function renameFolder(id) {
+            const folder = state.folders.find(f => f.id === id);
+            if (!folder) return;
+            
+            const newName = prompt('Enter new folder name:', folder.name);
+            if (newName && newName.trim()) {
+                folder.name = newName.trim();
+                saveState();
+                renderFolders();
+                showToast('Folder renamed successfully!');
+            }
+        }
+
+        function deleteFolder(id) {
+            if (!confirm('Are you sure you want to delete this folder and all its contents?')) return;
+            
+            // Remove folder and its subfolders
+            const removeFolderAndChildren = (folderId) => {
+                state.folders = state.folders.filter(f => f.id !== folderId);
+                // Remove media in this folder
+                state.media = state.media.filter(m => m.folderId !== folderId);
+                
+                // Remove child folders
+                const children = state.folders.filter(f => f.parentId === folderId);
+                children.forEach(child => removeFolderAndChildren(child.id));
+            };
+            
+            removeFolderAndChildren(id);
+            
+            if (state.activeFolderId === id) {
+                state.activeFolderId = '';
+            }
+            
+            saveState();
+            renderFolders();
+            renderMain();
+            showToast('Folder deleted successfully!');
+        }
+
+        // Media actions
+        function renameMedia(id) {
+            event.stopPropagation();
+            const media = state.media.find(m => m.id === id);
+            if (!media) return;
+            
+            const newName = prompt('Enter new media name:', media.name);
+            if (newName && newName.trim()) {
+                media.name = newName.trim();
+                saveState();
+                renderMain();
+                showToast('Media renamed successfully!');
+            }
+        }
+
+        function deleteMedia(id) {
+            event.stopPropagation();
+            const media = state.media.find(m => m.id === id);
+            if (!media) return;
+            
+            if (confirm(`Are you sure you want to delete "${media.name}"?`)) {
+                state.media = state.media.filter(m => m.id !== id);
+                saveState();
+                renderMain();
+                showToast('Media deleted successfully!');
+            }
+        }
+
+        // Reddit media fetching
+        let currentRedditMedia = null;
+
+        async function fetchRedditMedia() {
+            const urlInput = document.getElementById('redditUrl');
+            const url = urlInput.value.trim();
+            const preview = document.getElementById('redditPreview');
+            const mediaBox = document.getElementById('redditMediaBox');
+            const saveBtn = document.getElementById('saveFromReddit');
+            const fetchBtn = document.getElementById('fetchReddit');
+            const previewInfo = document.getElementById('previewInfo');
+            
+            if (!url) {
+                showToast('Please enter a Reddit URL');
+                return;
+            }
+            
+            // Show loading
+            fetchBtn.disabled = true;
+            fetchBtn.innerHTML = '<div class="loading"></div> Fetching...';
+            mediaBox.innerHTML = '<div>🔮 Fetching media from Reddit...</div>';
+            preview.style.display = 'block';
+            saveBtn.style.display = 'none';
+            
+            try {
+                // Extract post ID from URL
+                const postIdMatch = url.match(/(?:reddit\.com\/r\/\w+\/comments\/)(\w+)/);
+                if (!postIdMatch) {
+                    throw new Error('Invalid Reddit URL format. Please use a direct Reddit post URL.');
+                }
+                
+                const postId = postIdMatch[1];
+                // Use a CORS proxy to avoid CORS issues
+                const proxyUrl = 'https://corsproxy.io/?';
+                const jsonUrl = `${proxyUrl}https://www.reddit.com/comments/${postId}.json`;
+                
+                const response = await fetch(jsonUrl);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch Reddit data: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const postData = data[0].data.children[0].data;
+                
+                // Extract media
+                let mediaUrl = null;
+                let mediaType = null;
+                let title = postData.title;
+                
+                // Check for Reddit video
+                if (postData.media && postData.media.reddit_video) {
+                    mediaUrl = postData.media.reddit_video.fallback_url;
+                    mediaType = 'video';
+                } 
+                // Check for image
+                else if (postData.url && /\.(jpg|jpeg|png|gif|webp)$/i.test(postData.url)) {
+                    mediaUrl = postData.url;
+                    mediaType = 'photo';
+                }
+                // Check for gallery
+                else if (postData.is_gallery) {
+                    // For galleries, we'll use the first image
+                    const galleryData = postData.gallery_data;
+                    const mediaMetadata = postData.media_metadata;
+                    
+                    if (galleryData && mediaMetadata) {
+                        const firstItem = galleryData.items[0];
+                        const mediaId = firstItem.media_id;
+                        const mediaInfo = mediaMetadata[mediaId];
+                        
+                        if (mediaInfo && mediaInfo.s) {
+                            // Get the highest quality image available
+                            const imageUrl = mediaInfo.s.u || 
+                                           (mediaInfo.s.gif && mediaInfo.s.gif) || 
+                                           (mediaInfo.s.mp4 && mediaInfo.s.mp4);
+                            if (imageUrl) {
+                                mediaUrl = imageUrl.replace(/&amp;/g, '&');
+                                mediaType = /\.(gif|mp4)$/i.test(imageUrl) ? 'video' : 'photo';
+                            }
+                        }
+                    }
+                }
+                // Check for embedded content (like YouTube, etc.)
+                else if (postData.media && postData.media.oembed) {
+                    // For embedded content, we'll use the thumbnail
+                    mediaUrl = postData.media.oembed.thumbnail_url;
+                    mediaType = 'photo';
+                }
+                // Check for crosspost
+                else if (postData.crosspost_parent_list && postData.crosspost_parent_list.length > 0) {
+                    const crosspost = postData.crosspost_parent_list[0];
+                    if (crosspost.media && crosspost.media.reddit_video) {
+                        mediaUrl = crosspost.media.reddit_video.fallback_url;
+                        mediaType = 'video';
+                    } else if (crosspost.url && /\.(jpg|jpeg|png|gif|webp)$/i.test(crosspost.url)) {
+                        mediaUrl = crosspost.url;
+                        mediaType = 'photo';
+                    }
+                }
+                
+                if (mediaUrl) {
+                    mediaBox.innerHTML = '';
+                    
+                    if (mediaType === 'video') {
+                        const video = document.createElement('video');
+                        video.src = mediaUrl;
+                        video.controls = true;
+                        video.autoplay = false;
+                        video.muted = true;
+                        video.style.maxWidth = '100%';
+                        video.style.maxHeight = '300px';
+                        mediaBox.appendChild(video);
+                    } else {
+                        const img = document.createElement('img');
+                        img.src = mediaUrl;
+                        img.style.maxWidth = '100%';
+                        img.style.maxHeight = '300px';
+                        img.onerror = function() {
+                            // If image fails to load, try without CORS proxy
+                            if (mediaUrl.includes('corsproxy.io')) {
+                                const directUrl = mediaUrl.replace('https://corsproxy.io/?', '');
+                                img.src = directUrl;
+                            }
+                        };
+                        mediaBox.appendChild(img);
+                    }
+                    
+                    previewInfo.textContent = `From: r/${postData.subreddit} - ${title}`;
+                    
+                    currentRedditMedia = {
+                        url: mediaUrl,
+                        type: mediaType,
+                        name: `${postData.subreddit}_${postId}.${mediaType === 'video' ? 'mp4' : 'jpg'}`,
+                        title: title
+                    };
+                    
+                    saveBtn.style.display = 'block';
+                    showToast('Media fetched successfully!');
+                } else {
+                    throw new Error('No media found in this post. This post may contain text only or unsupported media types.');
+                }
+                
+            } catch (error) {
+                console.error('Reddit fetch error:', error);
+                mediaBox.innerHTML = `<div>❌ Error: ${error.message}</div>`;
+                currentRedditMedia = null;
+            } finally {
+                // Reset button state
+                fetchBtn.disabled = false;
+                fetchBtn.textContent = 'Fetch Media';
+            }
+        }
+
+        // Save from Reddit
+        async function saveFromReddit() {
+            if (!currentRedditMedia) {
+                showToast('No media to save');
+                return;
+            }
+            
+            const saveBtn = document.getElementById('saveFromReddit');
+            
+            try {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<div class="loading"></div> Saving...';
+                
+                // Use CORS proxy for fetching
+                const proxyUrl = 'https://corsproxy.io/?';
+                const mediaUrl = currentRedditMedia.url.includes('corsproxy.io') ? 
+                    currentRedditMedia.url : 
+                    proxyUrl + currentRedditMedia.url;
+                
+                const response = await fetch(mediaUrl);
+                if (!response.ok) {
+                    throw new Error(`Failed to download media: ${response.status}`);
+                }
+                
+                const blob = await response.blob();
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const media = {
+                        id: uid('media'),
+                        name: currentRedditMedia.name,
+                        type: currentRedditMedia.type,
+                        dataUrl: e.target.result,
+                        createdAt: Date.now(),
+                        folderId: state.activeFolderId || ''
+                    };
+                    
+                    state.media.push(media);
+                    saveState();
+                    renderMain();
+                    
+                    // Reset
+                    document.getElementById('redditUrl').value = '';
+                    document.getElementById('redditPreview').style.display = 'none';
+                    document.getElementById('saveFromReddit').style.display = 'none';
+                    currentRedditMedia = null;
+                    
+                    showToast('Media saved to library!');
+                };
+                
+                reader.readAsDataURL(blob);
+                
+            } catch (error) {
+                console.error('Save error:', error);
+                showToast('Failed to save media: ' + error.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '⬇️ Download to Library';
+            }
+        }
+
+        // Viewer functionality
+        let currentViewerIndex = -1;
+        let viewerMediaList = [];
+
+        function openViewer(media) {
+            // Get current media list for navigation
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            viewerMediaList = state.media.filter(m => 
+                (state.activeFolderId ? m.folderId === state.activeFolderId : !m.folderId) &&
+                (m.name.toLowerCase().includes(searchTerm))
+            );
+            
+            if (state.sort === 'newest') {
+                viewerMediaList.sort((a, b) => b.createdAt - a.createdAt);
+            } else {
+                viewerMediaList.sort((a, b) => a.createdAt - a.createdAt);
+            }
+            
+            currentViewerIndex = viewerMediaList.findIndex(m => m.id === media.id);
+            
+            const viewer = document.getElementById('viewer');
+            const viewerVideo = document.getElementById('viewerVideo');
+            const viewerImage = document.getElementById('viewerImage');
+            const viewerFilename = document.getElementById('viewerFilename');
+            
+            viewerFilename.textContent = media.name;
+            
+            if (media.type === 'video') {
+                viewerVideo.src = media.dataUrl;
+                viewerVideo.style.display = 'block';
+                viewerImage.style.display = 'none';
+                viewerVideo.play().catch(e => console.log('Autoplay prevented'));
+            } else {
+                viewerImage.src = media.dataUrl;
+                viewerImage.style.display = 'block';
+                viewerVideo.style.display = 'none';
+            }
+            
+            viewer.classList.add('show');
+        }
+
+        function closeViewer() {
+            const viewer = document.getElementById('viewer');
+            const viewerVideo = document.getElementById('viewerVideo');
+            
+            viewer.classList.remove('show');
+            viewerVideo.pause();
+            currentViewerIndex = -1;
+            viewerMediaList = [];
+        }
+
+        function prevMedia() {
+            if (currentViewerIndex > 0) {
+                currentViewerIndex--;
+                openViewer(viewerMediaList[currentViewerIndex]);
+            } else {
+                showToast('⏮️ Already at the beginning');
+            }
+        }
+
+        function nextMedia() {
+            if (currentViewerIndex < viewerMediaList.length - 1) {
+                currentViewerIndex++;
+                openViewer(viewerMediaList[currentViewerIndex]);
+            } else {
+                showToast('⏭️ Already at the end');
+            }
+        }
+
+        // Import/Export functionality (simplified)
+        document.getElementById('exportLibrary').addEventListener('click', function() {
+            const dataStr = JSON.stringify(state);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `merlin_media_archive_${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showToast('Library exported successfully!');
+        });
+
+        document.getElementById('importLibrary').addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedState = JSON.parse(e.target.result);
+                        state = importedState;
+                        saveState();
+                        renderFolders();
+                        renderMain();
+                        showToast('Library imported successfully!');
+                    } catch (error) {
+                        console.error('Import error:', error);
+                        showToast('Failed to import library');
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        });
+    </script>
+</body>
+</html>
