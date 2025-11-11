@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beam Media Library — Explorer</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg-primary:hsl(220,25%,8%);
+      --bg-card:hsl(220,22%,12%);
+      --bg-muted:hsl(220,20%,18%);
+      --primary:hsl(200,95%,45%);
+      --primary-glow:hsl(195,100%,55%);
+      --accent:hsl(185,85%,50%);
+      --foreground:hsl(210,20%,98%);
+      --muted-foreground:hsl(210,15%,65%);
+      --border:hsl(215,20%,22%);
+      --destructive:hsl(0,75%,55%);
+    }
+    body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(180deg,var(--bg-primary),hsl(220,22%,14%));color:var(--foreground);min-height:100vh}
+    ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:var(--bg-muted);border-radius:5px}::-webkit-scrollbar-thumb{background:var(--primary);border-radius:5px}::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+    .header{border-bottom:1px solid var(--border);background:rgba(26,32,44,.3);backdrop-filter:blur(8px);position:sticky;top:0;z-index:40}
+    .header-content{max-width:1400px;margin:0 auto;padding:1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+    .logo-section{display:flex;align-items:center;gap:.75rem}
+    .logo{width:48px;height:48px;
+      background:url('https://i.pinimg.com/736x/74/81/4c/74814c14c358a0235cb94be80a5723ad.jpg') center/cover no-repeat;
+      border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 8px 32px rgba(0,150,200,.4);
+      animation:swim 3s ease-in-out infinite;}
+    @keyframes swim{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-5px) rotate(2deg)}}
+    .logo svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:2}
+    .title h1{font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--primary-glow),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .title p{font-size:.8rem;color:var(--muted-foreground)}
+    .btn{padding:.5rem .9rem;border:none;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem;transition:all .2s ease}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-glow));color:#fff}.btn-primary:hover{opacity:.95;transform:translateY(-1px);box-shadow:0 8px 16px rgba(0,150,200,.25)}
+    .btn-outline{background:transparent;border:1px solid var(--border);color:var(--foreground)}.btn-outline:hover{background:var(--bg-muted)}
+    .btn-sm{padding:.25rem .5rem;font-size:.75rem}.btn-icon{padding:.5rem;width:36px;height:36px}
+    .container{max-width:1400px;margin:0 auto;padding:1.5rem}
+    .grid-layout{display:grid;grid-template-columns:280px 1fr;gap:1.5rem}
+    @media (max-width:1024px){.grid-layout{grid-template-columns:1fr}}
+    .card{background:rgba(26,32,44,.5);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:12px;padding:1rem}
+    .sidebar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+    .folder-item{padding:.5rem;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:.5rem;transition:background .2s ease;margin-bottom:.25rem;position:relative}
+    .folder-item:hover{background:rgba(0,150,200,.08)}.folder-item.active{background:rgba(0,150,200,.16);color:var(--accent)}
+    .folder-tree{margin-top:.5rem}
+    .folder-tree-item{padding-left:1rem}
+    .kebab{margin-left:auto;position:relative}
+    .kebab > button{background:transparent;border:1px solid var(--border);border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--muted-foreground);cursor:pointer}
+    .menu{position:absolute;top:36px;right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;min-width:160px;display:none;z-index:10}
+    .menu.show{display:block}
+    .menu .item{padding:.5rem .75rem;font-size:.875rem;display:flex;align-items:center;gap:.5rem;cursor:pointer}
+    .menu .item:hover{background:var(--bg-muted)}
+    .menu .danger{color:var(--destructive)}
+    .breadcrumb{display:flex;align-items:center;gap:.5rem;color:var(--muted-foreground);font-size:.875rem}
+    .main-content-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;gap:1rem;flex-wrap:wrap}
+    .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-top:.75rem}
+    .media-item{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:grab;transition:all .2s ease}
+    .media-item:active{cursor:grabbing}.media-item:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,150,200,.35)}
+    .media-item.selected{outline:2px solid var(--primary);box-shadow:0 0 10px var(--primary-glow)}
+    .media-thumbnail{aspect-ratio:1;background:var(--bg-muted);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .media-thumbnail img,.media-thumbnail video{width:100%;height:100%;object-fit:cover}
+    .type-badge{font-size:.65rem;white-space:nowrap;background:rgba(0,0,0,.55);border:1px solid var(--border);padding:.15rem .4rem;border-radius:999px}
+    .media-info{padding:.6rem;display:flex;align-items:center;gap:.5rem;justify-content:space-between}
+    .media-name{font-size:.75rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%}
+    .media-size{font-size:.675rem;color:var(--muted-foreground);margin-top:.2rem}
+    .folder-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:1rem;cursor:grab;transition:all .2s ease;text-align:center;position:relative}
+    .folder-card:hover{transform:translateY(-3px);background:rgba(0,150,200,.08)}
+    .folder-card .kebab{position:absolute;top:.5rem;right:.5rem}
+    .section-title{font-size:.875rem;color:var(--muted-foreground);margin:.25rem 0 .25rem .25rem;font-weight:600}
+    .empty-state{text-align:center;padding:2.2rem 1rem}
+    .hidden{display:none !important}
+    .icon{width:1rem;height:1rem;stroke:currentColor;fill:none;stroke-width:2}
+    .icon-lg{width:1.25rem;height:1.25rem}
+    .toast{position:fixed;bottom:2rem;right:2rem;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:60;display:none}
+    .toast.show{display:block}
+    .pagination{display:flex;justify-content:center;align-items:center;gap:.5rem;margin-top:1rem;flex-wrap:wrap}
+    .page-btn{border:1px solid var(--border);background:transparent;border-radius:8px;padding:.35rem .6rem;color:var(--foreground);cursor:pointer}
+    .page-btn.active{background:var(--primary);border-color:transparent}
+    /* Modal viewer: keep arrows close to media */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(6px);z-index:50;display:none;align-items:center;justify-content:center}
+    .modal-overlay.active{display:flex}
+    .modal-content{max-width:90vw;max-height:86vh;position:relative;display:flex;flex-direction:column;align-items:center}
+    .modal-close{position:fixed;top:16px;right:16px;z-index:80}
+    .modal-controls{display:flex;gap:.75rem;margin-top:.5rem}
+    .modal-media{max-width:100%;max-height:75vh;border-radius:12px}
+  
+.chev{
+  background:transparent;border:none;cursor:pointer;
+  width:1.25rem;height:1.25rem;line-height:1.25rem;
+  display:inline-flex;align-items:center;justify-content:center;
+  margin-right:.25rem;font-size:.95rem;color:var(--muted-foreground);
+}
+.chev:focus{ outline:1px dashed var(--border); outline-offset:2px; }
+.chev-spacer{ display:inline-block;width:1.25rem;height:1.25rem;margin-right:.25rem; }
+
+/* Progress modal */
+.progress-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.progress-modal.active {
+  display: flex;
+}
+.progress-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+  min-width: 300px;
+  max-width: 500px;
+}
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-muted);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transition: width 0.3s ease;
+  width: 0%;
+}
+</style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo-section">
+        <div class="logo"></div>
+        <div class="title">
+          <h1>Beam Media Library</h1>
+          <p>Explorer with Folders, Drag & Drop, Backup</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="dropdown" id="backupDropdown">
+          <button class="btn btn-outline" onclick="toggleDropdown('backupDropdown')">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Backup
+          </button>
+          <div class="menu" id="backupMenu">
+            <div class="item" onclick="exportBackup()">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Export JSON Backup
+            </div>
+            <div class="item" onclick="exportZipBackup()">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><polyline points="16,13 10,13 10,16"/><line x1="13" y1="10" x2="10" y2="13"/></svg>
+              Export ZIP Archive
+            </div>
+            <div class="item" onclick="document.getElementById('importInput').click()">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Import Backup
+            </div>
+          </div>
+        </div>
+        <!-- Keep a single Upload in header; removed any duplicate top-right upload buttons -->
+        <button class="btn btn-primary" onclick="document.getElementById('uploadInput').click()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          Upload
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="uploadProgress" class="container hidden">
+    <div class="card">
+      <p>Uploading...</p>
+      <div style="width:100%;height:8px;background:var(--bg-muted);border-radius:4px;overflow:hidden;margin-top:.5rem">
+        <div id="progressFill" style="height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .3s ease"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Modal for ZIP operations -->
+  <div id="progressModal" class="progress-modal">
+    <div class="progress-content">
+      <h3 id="progressTitle">Processing...</h3>
+      <p id="progressMessage">Please wait while we process your files.</p>
+      <div class="progress-bar">
+        <div id="zipProgressFill" class="progress-fill"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--muted-foreground)">
+        <span id="progressCurrent">0</span>
+        <span id="progressTotal">0</span>
+      </div>
+      <button id="cancelButton" class="btn btn-outline" style="margin-top: 1rem; width: 100%" onclick="cancelOperation()">Cancel</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="grid-layout">
+      <aside class="sidebar">
+        <div class="card">
+          <div class="sidebar-header">
+            <h2>Folders</h2>
+            <button class="btn btn-icon btn-sm" onclick="createFolder(null)">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
+<div id="dbxConnectContainer" style="margin:.5rem 0 0 0; display:flex; gap:.5rem; flex-wrap:wrap;">
+  <button id="dbxConnectBtn" class="btn btn-outline btn-sm">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 3l4 3-4 3-4-3 4-3zm0 8l4 3-4 3-4-3 4-3zm-4 6l4 3 4-3-4-3-4 3z"/></svg>
+    <span id="dbxBtnText">Connect Dropbox</span>
+  </button>
+  <span id="dbxStatus" style="align-self:center;font-size:.8rem;color:var(--muted-foreground)"></span>
+</div>
+
+          <div class="folder-item ${''}" ondblclick="navigateToFolder(null)" onclick="navigateToFolder(null)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Main Library</span>
+          </div>
+          <div id="folderTree" class="folder-tree"></div>
+        </div>
+      </aside>
+
+      <main>
+        <div class="card">
+          <div class="main-content-header">
+            <div class="breadcrumb">
+              <button id="backBtn" class="btn btn-icon btn-sm hidden" onclick="navigateBack()">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              </button>
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span id="breadcrumbText">Main Library</span>
+            </div>
+            <!-- Search section removed per request -->
+            <div style="display:flex;gap:.5rem">
+              <button class="btn btn-outline btn-sm" onclick="toggleSort()">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M11 5h10M11 9h7M11 13h4M3 17l3 3 3-3M6 18V4"/></svg>
+                <span id="sortLabel">Newest</span>
+              </button>
+              <button class="btn btn-outline btn-sm" id="selectModeBtn" onclick="toggleSelectMode()">Mode: Single</button>
+<button class="btn btn-outline btn-sm hidden" id="selectAllBtn" onclick="selectAll()">Select All</button>
+<button class="btn btn-outline btn-sm" id="renameBtn" onclick="renameSelected()" disabled>Rename</button>
+<button class="btn btn-outline btn-sm" id="deleteBtn" onclick="deleteSelected()" disabled>Delete</button>
+<button class="btn btn-outline btn-sm" onclick="createFolder(state.currentFolderId)">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                New Subfolder
+              </button>
+            </div>
+          </div>
+
+          <div id="subfoldersSection" class="hidden">
+            <h3 class="section-title">Folders</h3>
+            <div id="subfolders" class="media-grid"></div>
+          </div>
+
+          <div id="mediaSection">
+            <h3 class="section-title">Media</h3>
+            <div id="mediaGrid" class="media-grid"></div>
+          </div>
+
+          <div id="pagination" class="pagination hidden"></div>
+
+          <div id="emptyState" class="empty-state">
+            <p style="color:var(--muted-foreground);margin-bottom:.5rem">No media in this folder</p>
+            <p style="font-size:.875rem;color:var(--muted-foreground);margin-bottom:1rem">Upload images or videos to get started</p>
+            <button class="btn btn-primary" onclick="document.getElementById('uploadInput').click()">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Upload Files
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="mediaViewer" class="modal-overlay" aria-hidden="true">
+    <button class="btn btn-outline btn-icon modal-close" onclick="closeViewer()" title="Close">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="modal-content">
+      <div id="viewerContent"></div>
+      <div class="modal-controls">
+        <button class="btn btn-outline btn-sm" onclick="viewPrev()" id="prevMediaBtn">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Back
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="viewNext()" id="nextMediaBtn">
+          Next <svg class="icon" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="closeViewer()">
+          Close
+        </button>
+      </div>
+      <div style="text-align:center;margin-top:.25rem;color:rgba(255,255,255,.75)">
+        <span id="viewerName" style="font-weight:600"></span>
+        <span id="viewerIndex" style="margin-left:.5rem"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <input type="file" id="uploadInput" multiple accept="image/*,video/*" style="display:none" onchange="handleUpload(event)"/>
+  <input type="file" id="importInput" style="display:none" onchange="handleImport(event)"/>
+
+  <script type="module">
+    // Import client-zip which is much better for large files
+    import { downloadZip } from 'https://cdn.jsdelivr.net/npm/client-zip@2.4.4/index.js'
+    
+    // Make it available globally
+    window.downloadZip = downloadZip;
+  </script>
+
+  <script>
+    const STORAGE_KEY='mtp_meta_v6_explorer';
+    const DB_NAME='mtp_media_db'; const STORE_NAME='media';
+    const ITEMS_PER_PAGE=20;
+
+    let state={folders:[],media:[],currentFolderId:null,history:[],sortOrder:'newest',
+  collapsed: {}
+};
+    let currentPage=1; let currentViewIndex=-1; let db=null;
+    let cancelRequested = false;
+
+    // --- IndexedDB ---
+    function initDB(){
+      return new Promise((resolve,reject)=>{
+        const req=indexedDB.open(DB_NAME,1);
+        req.onerror=()=>reject(req.error);
+        req.onsuccess=()=>{db=req.result;resolve();};
+        req.onupgradeneeded=(e)=>{
+          const database=e.target.result;
+          if(!database.objectStoreNames.contains(STORE_NAME)){
+            database.createObjectStore(STORE_NAME,{keyPath:'id'});
+          }
+        };
+      });
+    }
+    function addMediaToDB(id,blob){return new Promise((res,rej)=>{const tx=db.transaction([STORE_NAME],'readwrite');tx.objectStore(STORE_NAME).put({id,blob}).onsuccess=()=>res();tx.onerror=()=>rej(tx.error);});}
+    function getMediaFromDB(id){return new Promise((res,rej)=>{const tx=db.transaction([STORE_NAME],'readonly');tx.objectStore(STORE_NAME).get(id).onsuccess=(e)=>res(e.target.result?.blob||null);tx.onerror=()=>rej(tx.error);});}
+    function deleteMediaFromDB(id){return new Promise((res,rej)=>{const tx=db.transaction([STORE_NAME],'readwrite');tx.objectStore(STORE_NAME).delete(id).onsuccess=()=>res();tx.onerror=()=>rej(tx.error);});}
+
+    // --- State ---
+    function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+    function loadState(){try{const s=localStorage.getItem(STORAGE_KEY);if(s){state={...state,...JSON.parse(s)};}}catch{}}
+    function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
+
+function isCollapsed(folderId){ return !!state.collapsed?.[folderId]; }
+function toggleCollapse(folderId, ev){
+  if(ev) ev.stopPropagation();
+  state.collapsed = state.collapsed || {};
+  state.collapsed[folderId] = !state.collapsed[folderId];
+  saveState();
+  renderFolderTree();
+}
+
+    function showToast(msg,ms=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),ms);}
+
+    // --- Progress Modal ---
+    function showProgress(title, message) {
+      document.getElementById('progressTitle').textContent = title;
+      document.getElementById('progressMessage').textContent = message;
+      document.getElementById('progressModal').classList.add('active');
+      cancelRequested = false;
+      document.getElementById('cancelButton').disabled = false;
+    }
+    
+    function updateProgress(current, total, message) {
+      if (cancelRequested) return false;
+      
+      const percent = Math.round((current / total) * 100);
+      document.getElementById('zipProgressFill').style.width = percent + '%';
+      document.getElementById('progressCurrent').textContent = current;
+      document.getElementById('progressTotal').textContent = total;
+      
+      if (message) {
+        document.getElementById('progressMessage').textContent = message;
+      }
+      
+      return true;
+    }
+    
+    function hideProgress() {
+      document.getElementById('progressModal').classList.remove('active');
+      document.getElementById('zipProgressFill').style.width = '0%';
+    }
+    
+    function cancelOperation() {
+      cancelRequested = true;
+      document.getElementById('cancelButton').disabled = true;
+      document.getElementById('progressMessage').textContent = 'Cancelling...';
+    }
+
+    // --- Dropdowns ---
+    function toggleDropdown(id){
+      const dd=document.getElementById(id);
+      const menu=dd.querySelector('.menu');
+      menu.classList.toggle('show');
+      setTimeout(()=>{
+        const close=(e)=>{if(!dd.contains(e.target)){menu.classList.remove('show');document.removeEventListener('click',close);}}
+        document.addEventListener('click',close);
+      },10);
+    }
+
+    // --- Folders ---
+    function createFolder(parentId){
+      const name=prompt('Folder name:');
+      if(!name||!name.trim()) return;
+      state.folders.push({id:uid(),name:name.trim(),parentId:parentId||null,createdAt:Date.now()});
+      saveState(); render(); showToast('Folder created');
+    }
+    function renameFolder(folderId){
+      const f=state.folders.find(x=>x.id===folderId); if(!f) return;
+      const name=prompt('Rename folder:',f.name);
+      if(!name||!name.trim()) return;
+      f.name=name.trim(); saveState(); render(); showToast('Folder renamed');
+    }
+    function deleteFolder(folderId){
+      if(!confirm('Delete folder and its subfolders and media?')) return;
+      // gather all descendant folders
+      const ids=new Set([folderId]);
+      let changed=true;
+      while(changed){
+        changed=false;
+        for(const f of state.folders){
+          if(f.parentId && ids.has(f.parentId) && !ids.has(f.id)){ids.add(f.id);changed=true;}
+        }
+      }
+      // delete media inside
+      state.media=state.media.filter(m=>!ids.has(m.folderId));
+      // delete folders
+      state.folders=state.folders.filter(f=>!ids.has(f.id));
+      if(ids.has(state.currentFolderId)) state.currentFolderId=null;
+      saveState(); render(); showToast('Folder deleted');
+    }
+    function navigateToFolder(folderId){
+      if(folderId!==state.currentFolderId) state.history.push(state.currentFolderId);
+      state.currentFolderId=folderId; currentPage=1; saveState(); render();
+    }
+    function navigateBack(){ if(state.history.length===0) return; state.currentFolderId=state.history.pop(); currentPage=1; saveState(); render(); }
+
+    // Drag & Drop for media and folders
+    function onMediaDragStart(ev,mediaId){ev.dataTransfer.setData('type','media');ev.dataTransfer.setData('id',mediaId);}
+    function onFolderDragStart(ev,folderId){ev.dataTransfer.setData('type','folder');ev.dataTransfer.setData('id',folderId);}
+    function allowDrop(ev){ev.preventDefault();}
+    function onDropToFolder(ev,targetFolderId){
+      ev.preventDefault();
+      const type=ev.dataTransfer.getData('type'); const id=ev.dataTransfer.getData('id');
+      if(type==='media'){
+        const m=state.media.find(x=>x.id===id); if(!m) return;
+        m.folderId=targetFolderId||null; saveState(); render(); showToast('Media moved');
+      }else if(type==='folder'){
+        if(id===targetFolderId) return;
+        // prevent parenting into own descendant
+        const isDescendant=(childId,ancestorId)=>{
+          let cur=state.folders.find(f=>f.id===childId);
+          while(cur){ if(cur.parentId===ancestorId) return true; cur=state.folders.find(f=>f.id===cur.parentId); }
+          return false;
+        };
+        if(isDescendant(targetFolderId,id)){ showToast('Cannot move folder into its descendant'); return; }
+        const f=state.folders.find(x=>x.id===id); if(!f) return;
+        f.parentId=targetFolderId||null; saveState(); render(); showToast('Folder moved');
+      }
+    }
+
+    // --- Media ---
+    async function handleUpload(e){
+      const files=[...e.target.files]; if(!files.length) return;
+      document.getElementById('uploadProgress').classList.remove('hidden');
+      const valid=['image/jpeg','image/png','image/gif','image/webp','video/mp4','video/webm','video/quicktime','video/x-m4v'];
+      let done=0;
+      for(const file of files){
+        if(!valid.includes(file.type)){showToast('Skipped '+file.name);continue;}
+        const id=uid();
+        await addMediaToDB(id,file);
+        state.media.push({id,name:file.name,type:file.type.startsWith('image')?'image':(file.type.includes('gif')?'gif':'video'),size:file.size,folderId:state.currentFolderId,createdAt:Date.now()});
+        done++; document.getElementById('progressFill').style.width=((done/files.length)*100)+'%';
+      }
+      document.getElementById('uploadProgress').classList.add('hidden');
+      saveState(); render(); showToast(done+' file(s) uploaded'); e.target.value='';
+    }
+    
+// --- Selection and Toolbar ---
+let selectMode = 'single';
+let selectedIds = new Set();
+
+function toggleSelectMode(){
+  selectMode = selectMode==='single'?'multi':'single';
+  document.getElementById('selectModeBtn').textContent = 'Mode: ' + (selectMode==='single'?'Single':'Multi');
+  document.getElementById('selectAllBtn').classList.toggle('hidden', selectMode==='single');
+  selectedIds.clear();
+  updateSelectionUI();
+}
+function selectItem(id,event){
+  event.stopPropagation();
+  if(selectMode==='single'){
+    selectedIds.clear(); selectedIds.add(id);
+  } else {
+    if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+  }
+  updateSelectionUI();
+}
+function selectAll(){
+  const items = state.media.filter(m=>m.folderId===state.currentFolderId);
+  if(selectedIds.size===items.length){selectedIds.clear();}
+  else{items.forEach(m=>selectedIds.add(m.id));}
+  updateSelectionUI();
+}
+function updateSelectionUI(){
+  document.querySelectorAll('.media-item').forEach(el=>{
+    const id = el.dataset.id;
+    el.classList.toggle('selected', selectedIds.has(id));
+  });
+  const renameBtn=document.getElementById('renameBtn');
+  const deleteBtn=document.getElementById('deleteBtn');
+  renameBtn.disabled = selectedIds.size!==1;
+  deleteBtn.disabled = selectedIds.size===0;
+  document.getElementById('selectAllBtn').textContent = (selectedIds.size>0?'Clear All':'Select All');
+}
+async function renameSelected(){
+  if(selectedIds.size!==1) return;
+  const id=[...selectedIds][0];
+  const m=state.media.find(x=>x.id===id);
+  const name=prompt('Rename media:',m.name);
+  if(!name||!name.trim()) return;
+  m.name=name.trim(); saveState(); render();
+}
+async function deleteSelected(){
+  if(selectedIds.size===0) return;
+  if(!confirm('Delete selected media?')) return;
+  for(const id of selectedIds){ await deleteMediaFromDB(id); state.media=state.media.filter(m=>m.id!==id); }
+  selectedIds.clear(); saveState(); render();
+}
+
+async function deleteMedia(mediaId){
+      if(!confirm('Delete this media?')) return;
+      await deleteMediaFromDB(mediaId);
+      state.media=state.media.filter(m=>m.id!==mediaId);
+      saveState(); render(); showToast('Media deleted');
+    }
+
+    function renameMedia(mediaId){
+      const m=state.media.find(x=>x.id===mediaId); if(!m) return;
+      const name=prompt('Rename media:', m.name);
+      if(!name || !name.trim()) return;
+      m.name=name.trim(); saveState(); render(); showToast('Media renamed');
+    }
+
+    function toggleSort(){state.sortOrder=state.sortOrder==='newest'?'oldest':'newest'; saveState(); render();}
+
+    function getFilteredMedia(){
+      // Search removed: only filter by folder
+      let items=state.media.filter(m=>m.folderId===state.currentFolderId);
+      items.sort((a,b)=>state.sortOrder==='newest'?(b.createdAt-a.createdAt):(a.createdAt-b.createdAt));
+      return items;
+    }
+
+    // Viewer
+    async function viewMediaAt(globalIndex){
+      const items=getFilteredMedia();
+      if(globalIndex<0||globalIndex>=items.length) return;
+      currentViewIndex=globalIndex;
+      const m=items[globalIndex];
+      const blob=await getMediaFromDB(m.id); if(!blob){showToast('Media not found');return;}
+      const url=URL.createObjectURL(blob);
+      const content=document.getElementById('viewerContent');
+      if(m.type==='image' || m.type==='gif'){
+        content.innerHTML=`<img class="modal-media" src="${url}" alt="${m.name}">`;
+      }else{
+        content.innerHTML=`<video class="modal-media" src="${url}" controls autoplay></video>`;
+      }
+      document.getElementById('viewerName').textContent=m.name;
+      document.getElementById('viewerIndex').textContent=(currentViewIndex+1)+' of '+items.length;
+      document.getElementById('prevMediaBtn').style.display=currentViewIndex>0?'inline-flex':'none';
+      document.getElementById('nextMediaBtn').style.display=currentViewIndex<items.length-1?'inline-flex':'none';
+      document.getElementById('mediaViewer').classList.add('active');
+    }
+    function closeViewer(){document.getElementById('mediaViewer').classList.remove('active');document.getElementById('viewerContent').innerHTML='';currentViewIndex=-1;}
+    function viewPrev(){ if(currentViewIndex>0) viewMediaAt(currentViewIndex-1); }
+    function viewNext(){ const items=getFilteredMedia(); if(currentViewIndex<items.length-1) viewMediaAt(currentViewIndex+1); }
+    document.addEventListener('keydown',(e)=>{
+      if(!document.getElementById('mediaViewer').classList.contains('active')) return;
+      if(e.key==='Escape') closeViewer();
+      if(e.key==='ArrowLeft') viewPrev();
+      if(e.key==='ArrowRight') viewNext();
+    });
+
+    // --- Backup ---
+    async function exportBackup() {
+      try {
+        // Show loading state
+        showToast('Preparing backup... This may take a while for large files.');
+        
+        // gather state + blobs (base64) - but handle large files differently
+        const data = {
+          meta: { exportedAt: Date.now(), version: 'v2' },
+          state: { ...state },
+          mediaBlobs: {}
+        };
+
+        // Process media files with chunking to avoid stack overflow
+        for (const m of state.media) {
+          const blob = await getMediaFromDB(m.id);
+          if (blob) {
+            // For files larger than 50MB, use a different approach or skip
+            if (blob.size > 50 * 1024 * 1024) {
+              console.warn(`Skipping large file: ${m.name} (${(blob.size / 1024 / 1024).toFixed(2)} MB)`);
+              data.mediaBlobs[m.id] = { 
+                type: blob.type, 
+                size: blob.size, 
+                skipped: true, 
+                reason: 'File too large for backup' 
+              };
+              continue;
+            }
+
+            // Use FileReader to handle base64 conversion without stack overflow
+            const b64 = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                // Remove data URL prefix (e.g., "data:image/jpeg;base64,")
+                const base64 = reader.result.split(',')[1];
+                resolve(base64);
+              };
+              reader.readAsDataURL(blob);
+            });
+
+            data.mediaBlobs[m.id] = {
+              type: blob.type,
+              size: blob.size,
+              b64: b64
+            };
+          }
+        }
+
+        const json = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const url = URL.createObjectURL(json);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `beam_media_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast('Backup exported successfully');
+      } catch (err) {
+        console.error('Export failed:', err);
+        showToast('Export failed: ' + err.message);
+      }
+    }
+
+    // --- ZIP Archive Backup using client-zip ---
+    async function exportZipBackup() {
+      if (typeof downloadZip === 'undefined') {
+        showToast('ZIP library not loaded. Please check your connection.');
+        return;
+      }
+
+      try {
+        showProgress('Creating ZIP Archive', 'Preparing your media files...');
+        
+        // Prepare files for ZIP
+        const files = [];
+        let processed = 0;
+        const total = state.media.length;
+        
+        // Add metadata first
+        const metadata = {
+          meta: { 
+            exportedAt: Date.now(), 
+            version: 'v3-zip',
+            totalFiles: state.media.length
+          },
+          state: { ...state },
+          mediaFiles: state.media.map(m => ({
+            id: m.id,
+            name: m.name,
+            type: m.type,
+            size: m.size,
+            folderId: m.folderId,
+            createdAt: m.createdAt,
+            folderPath: getFolderPath(m.folderId)
+          }))
+        };
+        
+        files.push({
+          name: 'metadata.json',
+          input: JSON.stringify(metadata, null, 2)
+        });
+        
+        // Process media files
+        for (const m of state.media) {
+          if (cancelRequested) {
+            showToast('ZIP creation cancelled');
+            hideProgress();
+            return;
+          }
+          
+          const blob = await getMediaFromDB(m.id);
+          if (blob) {
+            // Get file extension
+            const ext = getFileExtension(m.type, m.name);
+            const filename = `${m.id}${ext}`;
+            
+            files.push({
+              name: `media/${filename}`,
+              input: blob,
+              lastModified: new Date(m.createdAt)
+            });
+          }
+          
+          processed++;
+          if (!updateProgress(processed, total, `Added ${m.name}`)) {
+            break;
+          }
+          
+          // Yield to UI to prevent freezing
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+        
+        if (cancelRequested) {
+          showToast('ZIP creation cancelled');
+          hideProgress();
+          return;
+        }
+        
+        updateProgress(total, total, 'Finalizing ZIP file...');
+        
+        // Use client-zip to create and download the ZIP
+        const blob = await downloadZip(files).blob();
+        
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `beam_media_archive_${new Date().toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        hideProgress();
+        showToast('ZIP archive exported successfully!');
+        
+      } catch (err) {
+        console.error('ZIP export failed:', err);
+        hideProgress();
+        showToast('ZIP export failed: ' + err.message);
+      }
+    }
+    
+    function getFileExtension(mimeType, fileName) {
+      // Map common MIME types to extensions
+      const mimeToExt = {
+        'image/jpeg': '.jpg',
+        'image/jpg': '.jpg',
+        'image/png': '.png',
+        'image/gif': '.gif',
+        'image/webp': '.webp',
+        'video/mp4': '.mp4',
+        'video/webm': '.webm',
+        'video/quicktime': '.mov',
+        'video/x-m4v': '.m4v'
+      };
+      
+      // Try to get extension from MIME type first
+      if (mimeToExt[mimeType]) {
+        return mimeToExt[mimeType];
+      }
+      
+      // Fallback: try to extract from original filename
+      if (fileName && fileName.includes('.')) {
+        return '.' + fileName.split('.').pop();
+      }
+      
+      // Final fallback
+      return '.bin';
+    }
+    
+    function getFolderPath(folderId) {
+      if (!folderId) return '/';
+      
+      const path = [];
+      let current = state.folders.find(f => f.id === folderId);
+      
+      while (current) {
+        path.unshift(current.name);
+        current = state.folders.find(f => f.id === current.parentId);
+      }
+      
+      return '/' + path.join('/');
+    }
+
+    async function handleImport(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      
+      // For now, we'll only handle JSON imports with ZIP
+      // ZIP import would require additional libraries
+      await importJsonBackup(file);
+    }
+    
+    async function importJsonBackup(file) {
+      try {
+        showToast('Importing backup...');
+        const txt = await file.text();
+        const data = JSON.parse(txt);
+        
+        if (!data || !data.state || !data.mediaBlobs) {
+          throw new Error('Invalid backup file format');
+        }
+
+        // Restore state
+        state = { ...state, ...data.state };
+        
+        // Restore blobs with error handling
+        let successCount = 0;
+        let skipCount = 0;
+        
+        for (const [id, info] of Object.entries(data.mediaBlobs)) {
+          try {
+            if (info.skipped) {
+              console.warn(`Skipped file from backup: ${id} - ${info.reason}`);
+              skipCount++;
+              continue;
+            }
+            
+            if (!info.b64) {
+              console.warn(`No base64 data for: ${id}`);
+              skipCount++;
+              continue;
+            }
+
+            const bytes = Uint8Array.from(atob(info.b64), c => c.charCodeAt(0));
+            await addMediaToDB(id, new Blob([bytes], { type: info.type || 'application/octet-stream' }));
+            successCount++;
+          } catch (err) {
+            console.error(`Failed to import media ${id}:`, err);
+            skipCount++;
+          }
+        }
+        
+        saveState();
+        render();
+        showToast(`Backup imported: ${successCount} files, ${skipCount} skipped`);
+      } catch (err) {
+        console.error('Import failed:', err);
+        showToast('Import failed: ' + err.message);
+      }
+    }
+
+    // --- Render helpers ---
+    function folderCount(folderId){ return state.media.filter(m=>m.folderId===folderId).length; }
+    function subfoldersOf(parentId){ return state.folders.filter(f=>f.parentId===parentId); }
+
+    function renderFolderTree(){
+      const tree=document.getElementById('folderTree');
+      const roots=state.folders.filter(f=>!f.parentId);
+      const makeNode=(folder,level=0)=>{
+        const indent=`style="padding-left:${(level*12)}px"`;
+        const isActive=folder.id===state.currentFolderId?'active':'';
+        return `<div class="folder-item ${isActive}" ${indent} 
+                    draggable="true" ondragstart="onFolderDragStart(event,'${folder.id}')"
+                    ondragover="allowDrop(event)" ondrop="onDropToFolder(event,'${folder.id}')"
+                    onclick="navigateToFolder('${folder.id}')" ondblclick="navigateToFolder('${folder.id}')">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-5l2-3h9l2 3v5"/></svg>
+                  <span>${folder.name}</span>
+                  <span style="margin-left:auto;font-size:.75rem;color:var(--muted-foreground)">${folderCount(folder.id)}</span>
+                  <div class="kebab" onclick="event.stopPropagation();">
+                    <button onclick="this.nextElementSibling.classList.toggle('show')">⋯</button>
+                    <div class="menu">
+                      <div class="item" onclick="createFolder('${folder.id}')">+ Subfolder</div>
+                      <div class="item" onclick="renameFolder('${folder.id}')">Rename</div>
+                      <div class="item danger" onclick="deleteFolder('${folder.id}')">Delete</div>
+                    </div>
+                  </div>
+                </div>`
+                + subfoldersOf(folder.id).map(sf=>makeNode(sf,level+1)).join('');
+      };
+      tree.innerHTML = roots.map(r=>makeNode(r,0)).join('');
+    }
+
+    async function render(){
+      // breadcrumb & back
+      const cur=state.folders.find(f=>f.id===state.currentFolderId);
+      document.getElementById('breadcrumbText').textContent = cur?cur.name:'Main Library';
+      document.getElementById('backBtn').classList.toggle('hidden',state.history.length===0);
+      document.getElementById('sortLabel').textContent=state.sortOrder==='newest'?'Newest':'Oldest';
+const hasMedia = state.media.some(m=>m.folderId===state.currentFolderId);
+document.getElementById('selectModeBtn').parentElement.style.display = hasMedia ? 'flex' : 'none';
+
+      // folder tree
+      renderFolderTree();
+
+      // subfolders grid (in current folder)
+      const subs=subfoldersOf(state.currentFolderId);
+      const subsSection=document.getElementById('subfoldersSection');
+      const subsEl=document.getElementById('subfolders');
+      if(subs.length>0){
+        subsSection.classList.remove('hidden');
+        subsEl.innerHTML = subs.map(f=>`
+          <div class="folder-card" draggable="true"
+               ondragstart="onFolderDragStart(event,'${f.id}')"
+               ondragover="allowDrop(event)" ondrop="onDropToFolder(event,'${f.id}')"
+               onclick="navigateToFolder('${f.id}')" ondblclick="navigateToFolder('${f.id}')">
+            <div class="kebab" onclick="event.stopPropagation();">
+              <button onclick="this.nextElementSibling.classList.toggle('show')">⋯</button>
+              <div class="menu">
+                <div class="item" onclick="createFolder('${f.id}')">+ Subfolder</div>
+                <div class="item" onclick="renameFolder('${f.id}')">Rename</div>
+                <div class="item danger" onclick="deleteFolder('${f.id}')">Delete</div>
+              </div>
+            </div>
+            <svg class="icon" style="width:40px;height:40px;color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            <p style="font-weight:700;font-size:.9rem;margin-top:.35rem">${f.name}</p>
+            <p style="font-size:.75rem;color:var(--muted-foreground)">${folderCount(f.id)} items</p>
+          </div>
+        `).join('');
+      } else {
+        subsSection.classList.add('hidden'); subsEl.innerHTML='';
+      }
+
+      // media grid (only media in this folder)
+      const mediaItems=getFilteredMedia();
+      const totalPages=Math.max(1,Math.ceil(mediaItems.length/ITEMS_PER_PAGE));
+      if(currentPage>totalPages) currentPage=totalPages;
+      const start=(currentPage-1)*ITEMS_PER_PAGE;
+      const pageMedia=mediaItems.slice(start,start+ITEMS_PER_PAGE);
+
+      const grid=document.getElementById('mediaGrid');
+      if(pageMedia.length>0){
+        document.getElementById('emptyState').classList.add('hidden');
+        document.getElementById('mediaSection').classList.remove('hidden');
+        const itemHtml = await Promise.all(pageMedia.map(async (m,i)=>{
+          const blob=await getMediaFromDB(m.id);
+          const url=blob?URL.createObjectURL(blob):'';
+          const idx=start+i;
+          const badge = (m.type==='image'?'Photo':(m.type==='gif'?'GIF':'Video'));
+          return `
+            <div class="media-item" data-id="${m.id}" draggable="true" ondragstart="onMediaDragStart(event,'${m.id}')" onclick="selectItem('${m.id}',event)">
+              <div class="media-thumbnail" onclick="viewMediaAt(${idx})">
+                ${url ? (m.type==='image'||m.type==='gif' ? `<img src="${url}" alt="${m.name}">` : `<video src="${url}" muted></video>`) : ''}
+              </div>
+              <div class="media-info">
+                <div style="flex:1;min-width:0">
+                  <div class="media-name" title="${m.name}">${m.name}</div>
+                  <div class="media-size">${(m.size/1024/1024).toFixed(2)} MB</div>
+                </div>
+                <span class="type-badge">${badge}</span>
+                </div>
+</div>
+              </div>
+            </div>`;
+        }));
+        grid.innerHTML=itemHtml.join('');
+      } else {
+        grid.innerHTML='';
+        document.getElementById('mediaSection').classList.toggle('hidden',mediaItems.length===0);
+        document.getElementById('emptyState').classList.toggle('hidden',!(mediaItems.length===0 && subs.length===0));
+      }
+
+      // numeric pagination when > 20
+      const pager=document.getElementById('pagination');
+      if(totalPages>1){
+        pager.classList.remove('hidden');
+        let html='';
+        const makeBtn=(n,label=n)=>`<button class="page-btn ${n===currentPage?'active':''}" onclick="gotoPage(${n})">${label}</button>`;
+        // prev
+        html+=`<button class="page-btn" ${currentPage===1?'disabled':''} onclick="gotoPage(${Math.max(1,currentPage-1)})">Prev</button>`;
+        // numbers with simple window
+        const windowSize=5;
+        let startN=Math.max(1,currentPage-2), endN=Math.min(totalPages,startN+windowSize-1);
+        if(endN-startN<windowSize-1){startN=Math.max(1,endN-windowSize+1);}
+        if(startN>1){html+=makeBtn(1,'1'); if(startN>2) html+=`<span style="padding:0 .25rem">…</span>`;}
+        for(let n=startN;n<=endN;n++){ html+=makeBtn(n,String(n)); }
+        if(endN<totalPages){ if(endN<totalPages-1) html+=`<span style="padding:0 .25rem">…</span>`; html+=makeBtn(totalPages,String(totalPages)); }
+        // next
+        html+=`<button class="page-btn" ${currentPage===totalPages?'disabled':''} onclick="gotoPage(${Math.min(totalPages,currentPage+1)})">Next</button>`;
+        pager.innerHTML=html;
+      } else {
+        pager.classList.add('hidden'); pager.innerHTML='';
+      }
+    }
+
+    function gotoPage(n){currentPage=n; render();}
+
+    // --- Init ---
+    async function init(){await initDB(); loadState(); render();}
+    init();
+  
+function renderFolderTree(){
+  const tree = document.getElementById('folderTree');
+  if(!tree){ return; }
+  const roots = state.folders.filter(f=>!f.parentId);
+
+  const subfoldersOf = (parentId)=> state.folders.filter(f=>f.parentId===parentId);
+
+  const makeNode = (folder, level=0)=>{
+    const indent = `style="padding-left:${(level*12)}px"`;
+    const isActive = folder.id===state.currentFolderId ? 'active' : '';
+    const children  = subfoldersOf(folder.id);
+    const hasKids   = children.length>0;
+    const collapsed = isCollapsed(folder.id);
+
+    const row = `
+      <div class="folder-item ${isActive}" ${indent}
+           draggable="true"
+           ondragstart="onFolderDragStart(event,'${folder.id}')"
+           ondragover="allowDrop(event)"
+           ondrop="onDropToFolder(event,'${folder.id}')"
+           onclick="navigateToFolder('${folder.id}')"
+           ondblclick="navigateToFolder('${folder.id}')">
+
+        ${hasKids
+          ? `<button class="chev" aria-label="Toggle ${collapsed?'expand':'collapse'}"
+                     onclick="toggleCollapse('${folder.id}', event)">${collapsed?'▶️':'▼'}</button>`
+          : `<span class="chev-spacer"></span>`}
+
+        <svg class="icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-5l2-3h9l2 3v5"/></svg>
+        <span>${folder.name}</span>
+        <span style="margin-left:auto;font-size:.75rem;color:var(--muted-foreground)">${folderCount(folder.id)}</span>
+
+        <div class="kebab" onclick="event.stopPropagation();">
+          <button onclick="this.nextElementSibling.classList.toggle('show')">⋯</button>
+          <div class="menu">
+            <div class="item" onclick="createFolder('${folder.id}')">+ Subfolder</div>
+            <div class="item" onclick="renameFolder('${folder.id}')">Rename</div>
+            <div class="item danger" onclick="deleteFolder('${folder.id}')">Delete</div>
+          </div>
+        </div>
+      </div>`;
+
+    const kids = hasKids
+      ? `<div class="folder-tree-item" style="display:${collapsed?'none':'block'}">
+           ${children.map(sf=>makeNode(sf, level+1)).join('')}
+         </div>`
+      : '';
+
+    return row + kids;
+  };
+
+  tree.innerHTML = roots.map(r=>makeNode(r,0)).join('');
+}
+</script>
+
+<!-- Beam Media Library — Single-user Dropbox folder integration -->
+<script>
+/**
+ * Beam Media Library — Single-user Dropbox folder integration
+ * Layout (Dropbox AND local fallback):
+ *   <BASE>/<folderId>/<images|videos>/<original filename>
+ *
+ * HOW TO CONFIGURE:
+ * 1) Create ONE shared folder in Dropbox (e.g. "BeamMedia").
+ * 2) Convert its share link to a RAW base:
+ *    https://www.dropbox.com/scl/fo/<id>?rlkey=...&dl=0
+ *    -> https://dl.dropboxusercontent.com/scl/fo/<id>?rlkey=...&raw=1
+ * 3) Put files under:
+ *      /<folderId>/images/<filename>  (images)
+ *      /<folderId>/videos/<filename>  (videos)
+ * 4) Set DROPBOX_SHARED_BASE below.
+ */
+
+// Set to your Dropbox raw base:
+const DROPBOX_SHARED_BASE = "https://dl.dropboxusercontent.com/scl/fo/vi5uqbezk74m846o7f7fh?rlkey=ko5ktteqndfnz23hxeh7yj6ja&raw=1";
+const USE_DROPBOX = !!DROPBOX_SHARED_BASE;
+// FLAT mode: all files in one Dropbox folder
+const DROPBOX_FLAT = true;
+
+// Local fallback base (served next to index.html if you keep a copy locally)
+const LOCAL_BASE = "media";
+
+/** Utility */
+function safeEncodePath(p) {
+  return p.split("/").map(encodeURIComponent).join("/");
+}
+
+/** Decide subfolder from type */
+function typeDir(m) {
+  return (m.type === "video") ? "videos" : "images";
+}
+
+/** Build the relative media path from metadata fields */
+function relativeMediaPath(m) {
+  if (typeof DROPBOX_FLAT !== 'undefined' && DROPBOX_FLAT) {
+    return safeEncodePath(m.name);
+  }
+  const sub = typeDir(m);
+  return `${m.folderId}/${sub}/${safeEncodePath(m.name)}`;
+}/${sub}/${safeEncodePath(m.name)}`;
+}
+
+/** Main URL resolver with Dropbox first, then local fallback */
+function getMediaURL(m) {
+  const rel = relativeMediaPath(m);
+  if (USE_DROPBOX) {
+    return `${DROPBOX_SHARED_BASE.replace(/\\/$/, "")}/${rel}`;
+  }
+  return `${LOCAL_BASE.replace(/\\/$/, "")}/${rel}`;
+}
+
+/** Optional: ping Dropbox once to log reachability (non-blocking) */
+(async function verifyDropboxOnce() {
+  if (!USE_DROPBOX) return;
+  try {
+    const probe = await fetch(`${DROPBOX_SHARED_BASE.replace(/\\/$/,"")}/__beam_probe__`, { method: "GET", cache: "no-store" });
+    if (probe.ok || probe.status === 404) {
+      console.info("[Beam] Dropbox base reachable.");
+    } else {
+      console.warn("[Beam] Dropbox base returned status:", probe.status);
+    }
+  } catch (e) {
+    console.warn("[Beam] Dropbox not reachable. Media will use local fallback if available.", e);
+  }
+})();
+
+// Helper to progressively enhance existing renderers without editing them everywhere.
+// Whenever a thumbnail/video element has a data-media-json attribute with the item JSON,
+// we will auto-apply the resolved URL if 'src' still looks local.
+document.addEventListener("DOMContentLoaded", () => {
+  // Enhance images
+  document.querySelectorAll("img[data-media-json]").forEach(img => {
+    try {
+      const m = JSON.parse(img.getAttribute("data-media-json"));
+      if (m && !img.src) img.src = getMediaURL(m);
+    } catch {}
+  });
+  // Enhance videos
+  document.querySelectorAll("video[data-media-json]").forEach(v => {
+    try {
+      const m = JSON.parse(v.getAttribute("data-media-json"));
+      if (m && !v.src) v.src = getMediaURL(m);
+    } catch {}
+  });
+});
+</script>
+
+<!-- Beam Media Library — auto-rewrite media/src to Dropbox/local via metadata -->
+<script>
+(function(){
+  // Utility: best-effort filename -> metadata item lookup
+  function lookupMediaItem(filename, inferredType) {
+    try {
+      const st = window.state || {};
+      const items = (st.media || []).filter(x => x && x.name === filename && (!inferredType || x.type === inferredType));
+      if (items.length === 1) return items[0];
+      if (items.length > 1 && st.currentFolderId) {
+        const inFolder = items.find(x => x.folderId === st.currentFolderId);
+        if (inFolder) return inFolder;
+      }
+      return items[0] || null;
+    } catch (e) {
+      console.warn("[Beam] lookupMediaItem failed:", e);
+      return null;
+    }
+  }
+
+  function inferTypeFromExt(filename){
+    const ext = (filename.split(".").pop() || "").toLowerCase();
+    const videoExts = ["mp4","webm","mov","mkv","avi","m4v"];
+    return videoExts.includes(ext) ? "video" : "image";
+  }
+
+  // Global hook used by setters below
+  window.BeamRewriteSrc = function(element, value){
+    try {
+      if (!value || typeof value !== "string") return null;
+      // Only rewrite media/* paths
+      if (!/^\\.?\\/?media\\//i.test(value)) return null;
+      const filename = decodeURIComponent(value.split("/").pop());
+      const inferredType = inferTypeFromExt(filename);
+      const item = lookupMediaItem(filename, inferredType);
+      if (item) {
+        const url = getMediaURL(item); // defined in the Dropbox resolver script
+        return url;
+      }
+    } catch (e) {
+      console.warn("[Beam] BeamRewriteSrc failed:", e);
+    }
+    return null;
+  };
+
+  // Patch HTMLImageElement.src
+  try {
+    const dImg = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
+    if (dImg && dImg.set) {
+      Object.defineProperty(HTMLImageElement.prototype, "src", {
+        configurable: true,
+        enumerable: dImg.enumerable,
+        get: function(){ return dImg.get.call(this); },
+        set: function(v){
+          const rewritten = (window.BeamRewriteSrc && window.BeamRewriteSrc(this, v)) || v;
+          return dImg.set.call(this, rewritten);
+        }
+      });
+    }
+  } catch(e){ console.warn("[Beam] Failed to patch HTMLImageElement.src", e); }
+
+  // Patch HTMLMediaElement.src (covers <video> and <audio>)
+  try {
+    const dMed = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, "src");
+    if (dMed && dMed.set) {
+      Object.defineProperty(HTMLMediaElement.prototype, "src", {
+        configurable: true,
+        enumerable: dMed.enumerable,
+        get: function(){ return dMed.get.call(this); },
+        set: function(v){
+          const rewritten = (window.BeamRewriteSrc && window.BeamRewriteSrc(this, v)) || v;
+          return dMed.set.call(this, rewritten);
+        }
+      });
+    }
+  } catch(e){ console.warn("[Beam] Failed to patch HTMLMediaElement.src", e); }
+
+  // Patch generic setAttribute for older code paths
+  try {
+    const origSetAttr = Element.prototype.setAttribute;
+    Element.prototype.setAttribute = function(name, value){
+      if (name === "src") {
+        value = (window.BeamRewriteSrc && window.BeamRewriteSrc(this, value)) || value;
+      }
+      return origSetAttr.call(this, name, value);
+    };
+  } catch(e){ console.warn("[Beam] Failed to patch setAttribute('src')", e); }
+
+  console.info("[Beam] src rewriter active: media/* URLs will be resolved via getMediaURL + metadata.");
+})();
+</script>
+
+<!-- Dropbox SDK (pinned) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/10.34.0/Dropbox-sdk.min.js" crossorigin="anonymous"></script>
+
+<script>
+/**
+ * Dropbox OAuth (PKCE) + Flat Shared-Folder Integration
+ * - One-time "Connect Dropbox" signs you in and stores tokens in localStorage.
+ * - We list a *single* shared folder (your link) and build a filename->path map.
+ * - getMediaURL(m) will use a temporary link (auto-refreshing) for streaming.
+ *
+ * Requirements (Dropbox App Console):
+ *   - Create an app, enable scopes: files.metadata.read, files.content.read
+ *   - OAuth redirect URI: your site URL (e.g., https://user.github.io/index.html)
+ *   - App key: paste below
+ */
+const DBX_APP_KEY = "bz32jxhrc8pvxb3"; // TODO: paste your Dropbox App Key
+const DBX_REDIRECT_URI = "https://madarasreality215-ux.github.io/BeamStorage/index.html";
+const DBX_SCOPES = "files.metadata.read files.content.read";
+const DBX_SHARED_LINK = "https://www.dropbox.com/scl/fo/vi5uqbezk74m846o7f7fh/AEJndq-AdeBfk07N-goJLkg?rlkey=ko5ktteqndfnz23hxeh7yj6ja&dl=0"; // your folder's shared link (dl=0 is fine)
+const DBX_LOCAL_KEY = "beam_dbx_auth_v1";
+const DBX_TEMP_LINK_TTL_MS = 1000 * 60 * 60 * 3; // 3h soft TTL for temp links
+
+// State
+let dbxAuth = null;
+let dbx = null;
+let filenameToPath = null; // "filename.ext" -> "/path/in/dropbox/filename.ext"
+let tempLinkCache = new Map(); // filename -> {{ url, t: Date.now() }}
+
+function dbxLog(){ try {{ console.info.apply(console, ["[Beam-DBX]"].concat([...arguments])); }} catch(_){{}} }
+function dbxWarn(){ try {{ console.warn.apply(console, ["[Beam-DBX]"].concat([...arguments])); }} catch(_){{}} }
+
+function loadDbxAuthFromStorage(){{
+  try {{
+    const j = localStorage.getItem(DBX_LOCAL_KEY);
+    if (!j) return null;
+    const o = JSON.parse(j);
+    return o;
+  }} catch(e){{
+    dbxWarn("Failed to parse stored auth", e);
+    return null;
+  }}
+}}
+
+function saveDbxAuthToStorage(o){{
+  try {{ localStorage.setItem(DBX_LOCAL_KEY, JSON.stringify(o)); }}
+  catch(e){{ dbxWarn("Failed to save auth", e); }}
+}}
+
+function clearDbxAuth(){{
+  localStorage.removeItem(DBX_LOCAL_KEY);
+}}
+
+async function dbxEnsure(){{
+  if (!window.Dropbox) {{ dbxWarn("Dropbox SDK not loaded"); return false; }}
+  if (!dbxAuth) {{
+    const stored = loadDbxAuthFromStorage();
+    dbxAuth = new Dropbox.DropboxAuth({{ clientId: DBX_APP_KEY }});
+    if (stored && stored.refreshToken) {{
+      dbxAuth.setRefreshToken(stored.refreshToken);
+      if (stored.accessToken) dbxAuth.setAccessToken(stored.accessToken);
+      if (stored.accessTokenExpiresAt) dbxAuth.setAccessTokenExpiresAt(new Date(stored.accessTokenExpiresAt));
+    }}
+  }}
+  // Try to refresh if near/after expiry
+  try {{
+    await Dropbox.checkAndRefreshAccessToken(dbxAuth);
+  }} catch (e){{
+    dbxWarn("Token refresh failed (maybe not logged in yet):", e);
+  }}
+  // Bootstrap client
+  if (!dbx) {{
+    dbx = new Dropbox.Dropbox({{ auth: dbxAuth, fetch: window.fetch.bind(window) }});
+  }}
+  // Persist current tokens
+  try {{
+    const tok = {{
+      accessToken: await Dropbox.getAccessToken(dbxAuth),
+      accessTokenExpiresAt: await Dropbox.getAccessTokenExpiresAt(dbxAuth),
+      refreshToken: await Dropbox.getRefreshToken(dbxAuth),
+    }};
+    if (tok.refreshToken) saveDbxAuthToStorage(tok);
+  }} catch(e){{ /* non-fatal */ }}
+  return true;
+}}
+
+async function dbxLogin(){{
+  await dbxEnsure();
+  const authUrl = await dbxAuth.getAuthenticationUrl(
+    DBX_REDIRECT_URI,
+    undefined,          // state
+    "code",             // responseType
+    "offline",          // tokenAccessType (short-lived + refresh)
+    DBX_SCOPES,         // scope
+    undefined,          // includeGrantedScopes
+    true                // usePKCE
+  );
+  window.location.assign(authUrl);
+}}
+
+async function dbxHandleRedirect(){{
+  // If we're returning from Dropbox with a code, finish exchange
+  const p = new URLSearchParams(window.location.search);
+  const code = p.get("code");
+  if (!code) return false;
+  await dbxEnsure();
+  try {{
+    const {{ result }} = await dbxAuth.getAccessTokenFromCode(DBX_REDIRECT_URI, code);
+    // result: {{ access_token, token_type, expires_in, refresh_token, scope, uid, account_id }}
+    dbxAuth.setAccessToken(result.access_token);
+    dbxAuth.setRefreshToken(result.refresh_token);
+    dbxAuth.setAccessTokenExpiresAt(new Date(Date.now() + (result.expires_in - 60) * 1000));
+    saveDbxAuthToStorage({{
+      accessToken: result.access_token,
+      accessTokenExpiresAt: new Date(Date.now() + (result.expires_in - 60) * 1000),
+      refreshToken: result.refresh_token
+    }});
+    // Clean the URL
+    history.replaceState({{}}, document.title, DBX_REDIRECT_URI);
+    dbxLog("Dropbox connected.");
+    return true;
+  }} catch(e){{
+    dbxWarn("Exchange failed:", e);
+    return false;
+  }}
+}}
+
+async function dbxLogout(){{
+  try {{
+    await dbxEnsure();
+    try {{ await dbx.authTokenRevoke(); }} catch(_){}
+  }} finally {{
+    clearDbxAuth();
+    location.reload();
+  }}
+}}
+
+// --- Shared folder (flat) filename -> path map ---
+async function buildFilenameMapFromSharedLink(){{
+  await dbxEnsure();
+  if (!DBX_SHARED_LINK) {{ dbxWarn("No DBX_SHARED_LINK configured."); return null; }}
+  filenameToPath = {{}};
+  let hasMore = true;
+  let cursor = null;
+  const shared = {{ url: DBX_SHARED_LINK }};
+
+  while (hasMore) {{
+    let resp;
+    if (!cursor) {{
+      resp = await dbx.filesListFolder({{ path: "", shared_link: shared, recursive: false }});
+    }} else {{
+      resp = await dbx.filesListFolderContinue({{ cursor }});
+    }}
+    const entries = (resp && resp.result && resp.result.entries) || [];
+    for (const e of entries) {{
+      if (e['.tag'] === 'file') {{
+        filenameToPath[e.name] = e.path_lower || e.path_display || e.name;
+      }}
+    }}
+    hasMore = resp.result.has_more;
+    cursor = resp.result.cursor;
+  }}
+
+  dbxLog("Filename map built:", Object.keys(filenameToPath).length, "files");
+  return filenameToPath;
+}}
+
+async function getTempLinkForFilename(name){{
+  if (!name) return null;
+  const cached = tempLinkCache.get(name);
+  if (cached && (Date.now() - cached.t) < DBX_TEMP_LINK_TTL_MS) {{
+    return cached.url;
+  }}
+  await dbxEnsure();
+  if (!filenameToPath) await buildFilenameMapFromSharedLink();
+  const path = filenameToPath ? filenameToPath[name] : null;
+  if (!path) return null;
+  const {{ result }} = await dbx.filesGetTemporaryLink({{ path }});
+  const url = result && result.link;
+  if (url) tempLinkCache.set(name, {{ url, t: Date.now() }});
+  return url || null;
+}}
+
+// Wrap existing getMediaURL to prefer OAuth temp links
+const _getMediaURL_Old = (typeof getMediaURL === "function") ? getMediaURL : null;
+window.getMediaURL = async function(m){{
+  const stored = loadDbxAuthFromStorage();
+  if (stored && (stored.refreshToken || stored.accessToken)) {{
+    const link = await getTempLinkForFilename(m.name);
+    if (link) return link;
+  }}
+  if (_getMediaURL_Old) return _getMediaURL_Old(m);
+  return (m && m.name) ? m.name : "";
+}};
+
+// Helper for code paths that expect sync src assignment
+window.setSrcAsync = async function(el, m){{
+  try {{
+    const url = await window.getMediaURL(m);
+    if (url) el.src = url;
+  }} catch(e){{ dbxWarn("setSrcAsync failed", e); }}
+}};
+
+// Boot on load
+document.addEventListener("DOMContentLoaded", async () => {{
+  await dbxHandleRedirect();
+  const stored = loadDbxAuthFromStorage();
+  if (stored) {{
+    try {{ await buildFilenameMapFromSharedLink(); }} catch(e){{ dbxWarn("Map build failed", e); }}
+  }}
+  window.dropboxConnect = dbxLogin;
+  window.dropboxDisconnect = dbxLogout;
+  dbxLog("Ready. Call window.dropboxConnect() to sign in.");
+}});
+</script>
+
+<script>
+(function(){
+  const LS_KEY = "beam_dbx_auth_v1";
+
+  function isConnected(){
+    try {
+      const j = localStorage.getItem(LS_KEY);
+      if (!j) return false;
+      const o = JSON.parse(j);
+      return !!(o && (o.refreshToken || o.accessToken));
+    } catch { return false; }
+  }
+
+  function mountButton(){
+    const container = document.querySelector(".header .header-actions") || document.querySelector(".header-actions");
+    if (!container) return;
+    let btn = document.getElementById("dbxConnectBtn");
+    if (!btn){
+      btn = document.createElement("button");
+      btn.id = "dbxConnectBtn";
+      btn.className = "btn btn-outline btn-sm";
+      btn.style.marginLeft = ".5rem";
+      btn.innerHTML = `<svg class="icon" viewBox="0 0 24 24"><path d="M12 3l4 3-4 3-4-3 4-3zm0 8l4 3-4 3-4-3 4-3zm-4 6l4 3 4-3-4-3-4 3z"/></svg> <span id="dbxBtnText">Connect Dropbox</span>`;
+      btn.addEventListener("click", async () => {
+        try {
+          if (isConnected()) {
+            await (window.dropboxDisconnect && window.dropboxDisconnect());
+          } else {
+            await (window.dropboxConnect && window.dropboxConnect());
+          }
+        } catch (e) {
+          console.warn("[Beam] Dropbox button error:", e);
+        }
+        refreshButton();
+      });
+      container.prepend(btn);
+    }
+    refreshButton();
+  }
+
+  function refreshButton(){
+    const t = document.getElementById("dbxBtnText");
+    if (!t) return;
+    if (isConnected()){
+      t.textContent = "Disconnect Dropbox";
+    } else {
+      t.textContent = "Connect Dropbox";
+    }
+  }
+
+  // Try to resolve an item by filename using window.state (Beam app state)
+  function lookupMediaItemByFilename(filename){
+    try {
+      const st = window.state || {};
+      const list = Array.isArray(st.media) ? st.media : [];
+      const hits = list.filter(x => x && x.name === filename);
+      if (hits.length === 1) return hits[0];
+      if (st.currentFolderId){
+        const inFolder = hits.find(x => x.folderId === st.currentFolderId);
+        if (inFolder) return inFolder;
+      }
+      return hits[0] || null;
+    } catch { return null; }
+  }
+
+  async function ensureAsyncSrc(el){
+    try {
+      // If element already has data-media-json, prefer that
+      let m = null;
+      const j = el.getAttribute && el.getAttribute("data-media-json");
+      if (j){
+        try { m = JSON.parse(j); } catch{}
+      }
+      if (!m){
+        // try to infer from current src if it's a media/* path
+        const src = el.getAttribute && el.getAttribute("src");
+        if (src && /^\\.?\\/?media\\//i.test(src)){
+          const filename = decodeURIComponent(src.split("/").pop());
+          m = lookupMediaItemByFilename(filename);
+        }
+      }
+      if (!m) return; // nothing to do
+      if (typeof window.getMediaURL === "function"){
+        // prefer async helper to support OAuth temp links
+        if (typeof window.setSrcAsync === "function"){
+          await window.setSrcAsync(el, m);
+        } else {
+          // fallback: try direct
+          const url = await window.getMediaURL(m);
+          if (url) el.setAttribute("src", url);
+        }
+      }
+    } catch (e){
+      console.warn("[Beam] ensureAsyncSrc error:", e);
+    }
+  }
+
+  function scanAndEnhance(){
+    document.querySelectorAll("img[data-media-json], video[data-media-json]").forEach(el => ensureAsyncSrc(el));
+    // also try to enhance any img/video still pointing to media/*
+    document.querySelectorAll('img[src^="media/"], video[src^="media/"]').forEach(el => ensureAsyncSrc(el));
+  }
+
+  // Observe DOM mutations to catch dynamically added cards/viewer content
+  function startObserver(){
+    const obs = new MutationObserver((muts) => {
+      for (const m of muts){
+        m.addedNodes && m.addedNodes.forEach(n => {
+          if (!(n instanceof Element)) return;
+          if (n.matches && (n.matches('img[data-media-json], video[data-media-json]') || n.matches('img[src^="media/"], video[src^="media/"]'))){
+            ensureAsyncSrc(n);
+          }
+          // descend small subtrees
+          const imgs = n.querySelectorAll ? n.querySelectorAll('img[data-media-json], video[data-media-json], img[src^="media/"], video[src^="media/"]') : [];
+          imgs.forEach(el => ensureAsyncSrc(el));
+        });
+      }
+    });
+    obs.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    mountButton();
+    scanAndEnhance();
+    startObserver();
+    // update the button when auth changes (after redirect handler finishes)
+    setTimeout(refreshButton, 500);
+    setInterval(refreshButton, 5000);
+  });
+})();
+</script>
+
+<script>
+(function(){
+  const LS_KEY = "beam_dbx_auth_v1";
+  function isConnected(){
+    try{
+      const j = localStorage.getItem(LS_KEY);
+      if(!j) return false;
+      const o = JSON.parse(j);
+      return !!(o && (o.refreshToken || o.accessToken));
+    }catch(_){ return false; }
+  }
+  function refresh(){
+    const el = document.getElementById("dbxBtnTextStatic");
+    if(!el) return;
+    el.textContent = isConnected() ? "Disconnect Dropbox" : "Connect Dropbox";
+    const btn = document.getElementById("dbxConnectBtnStatic");
+    if(btn){
+      btn.onclick = () => {
+        if(isConnected()){
+          if(window.dropboxDisconnect){ dropboxDisconnect(); }
+        } else {
+          if(window.dropboxConnect){ dropboxConnect(); }
+        }
+        setTimeout(refresh, 800);
+      };
+    }
+  }
+  document.addEventListener("DOMContentLoaded", () => {
+    refresh();
+    setInterval(refresh, 3000);
+  });
+})();
+</script>
+
+<script>
+(function(){
+  const LS_KEY = "beam_dbx_auth_v1";
+  function isConnected(){
+    try{
+      const j = localStorage.getItem(LS_KEY);
+      if(!j) return false;
+      const o = JSON.parse(j);
+      return !!(o && (o.refreshToken || o.accessToken));
+    }catch(_){ return false; }
+  }
+  async function onClick(){
+    try{
+      const btn = document.getElementById("dbxConnectBtn");
+      const status = document.getElementById("dbxStatus");
+      if(!btn){ return; }
+      if(typeof window.dropboxConnect !== "function" || typeof window.dropboxDisconnect !== "function"){
+        status.textContent = "Dropbox SDK not ready — check App Key and redirect URI in your Dropbox app settings.";
+        console.warn("[Beam] dropboxConnect/dropboxDisconnect not available yet. Did the OAuth block load?");
+        return;
+      }
+      if(isConnected()){
+        await window.dropboxDisconnect();
+      }else{
+        await window.dropboxConnect();
+      }
+      setTimeout(updateUI, 800);
+    }catch(e){
+      console.error("[Beam] Dropbox connect error:", e);
+      const status = document.getElementById("dbxStatus");
+      if(status) status.textContent = "Error: " + (e?.message || e);
+    }
+  }
+  function updateUI(){
+    const t = document.getElementById("dbxBtnText");
+    const status = document.getElementById("dbxStatus");
+    if(!t || !status) return;
+    if(isConnected()){
+      t.textContent = "Disconnect Dropbox";
+      status.textContent = "Connected";
+    }else{
+      t.textContent = "Connect Dropbox";
+      status.textContent = "";
+    }
+  }
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("dbxConnectBtn");
+    if(btn) btn.addEventListener("click", onClick);
+    updateUI();
+    setInterval(updateUI, 3000);
+  });
+})();
+</script>
+
+<!-- Debug hint: If OAuth window doesn't open, make sure your Dropbox app has this exact Redirect URI whitelisted:
+     https://madarasreality215-ux.github.io/BeamStorage/index.html -->
+</body>
+</html>
