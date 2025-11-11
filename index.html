@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beam Media Library — Explorer</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg-primary:hsl(220,25%,8%);
+      --bg-card:hsl(220,22%,12%);
+      --bg-muted:hsl(220,20%,18%);
+      --primary:hsl(200,95%,45%);
+      --primary-glow:hsl(195,100%,55%);
+      --accent:hsl(185,85%,50%);
+      --foreground:hsl(210,20%,98%);
+      --muted-foreground:hsl(210,15%,65%);
+      --border:hsl(215,20%,22%);
+      --destructive:hsl(0,75%,55%);
+    }
+    body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(180deg,var(--bg-primary),hsl(220,22%,14%));color:var(--foreground);min-height:100vh}
+    ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:var(--bg-muted);border-radius:5px}::-webkit-scrollbar-thumb{background:var(--primary);border-radius:5px}::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+    .header{border-bottom:1px solid var(--border);background:rgba(26,32,44,.3);backdrop-filter:blur(8px);position:sticky;top:0;z-index:40}
+    .header-content{max-width:1400px;margin:0 auto;padding:1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+    .logo-section{display:flex;align-items:center;gap:.75rem}
+    .logo{width:48px;height:48px;
+      background:url('https://i.pinimg.com/736x/74/81/4c/74814c14c358a0235cb94be80a5723ad.jpg') center/cover no-repeat;
+      border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 8px 32px rgba(0,150,200,.4);
+      animation:swim 3s ease-in-out infinite;}
+    @keyframes swim{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-5px) rotate(2deg)}}
+    .logo svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:2}
+    .title h1{font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--primary-glow),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .title p{font-size:.8rem;color:var(--muted-foreground)}
+    .btn{padding:.5rem .9rem;border:none;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem;transition:all .2s ease}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-glow));color:#fff}.btn-primary:hover{opacity:.95;transform:translateY(-1px);box-shadow:0 8px 16px rgba(0,150,200,.25)}
+    .btn-outline{background:transparent;border:1px solid var(--border);color:var(--foreground)}.btn-outline:hover{background:var(--bg-muted)}
+    .btn-sm{padding:.25rem .5rem;font-size:.75rem}.btn-icon{padding:.5rem;width:36px;height:36px}
+    .container{max-width:1400px;margin:0 auto;padding:1.5rem}
+    .grid-layout{display:grid;grid-template-columns:280px 1fr;gap:1.5rem}
+    @media (max-width:1024px){.grid-layout{grid-template-columns:1fr}}
+    .card{background:rgba(26,32,44,.5);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:12px;padding:1rem}
+    .sidebar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+    .folder-item{padding:.5rem;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:.5rem;transition:background .2s ease;margin-bottom:.25rem;position:relative}
+    .folder-item:hover{background:rgba(0,150,200,.08)}.folder-item.active{background:rgba(0,150,200,.16);color:var(--accent)}
+    .folder-tree{margin-top:.5rem}
+    .folder-tree-item{padding-left:1rem}
+    .kebab{margin-left:auto;position:relative}
+    .kebab > button{background:transparent;border:1px solid var(--border);border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--muted-foreground);cursor:pointer}
+    .menu{position:absolute;top:36px;right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;min-width:160px;display:none;z-index:10}
+    .menu.show{display:block}
+    .menu .item{padding:.5rem .75rem;font-size:.875rem;display:flex;align-items:center;gap:.5rem;cursor:pointer}
+    .menu .item:hover{background:var(--bg-muted)}
+    .menu .danger{color:var(--destructive)}
+    .breadcrumb{display:flex;align-items:center;gap:.5rem;color:var(--muted-foreground);font-size:.875rem}
+    .main-content-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;gap:1rem;flex-wrap:wrap}
+    .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-top:.75rem}
+    .media-item{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:grab;transition:all .2s ease}
+    .media-item:active{cursor:grabbing}.media-item:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,150,200,.35)}
+    .media-item.selected{outline:2px solid var(--primary);box-shadow:0 0 10px var(--primary-glow)}
+    .media-thumbnail{aspect-ratio:1;background:var(--bg-muted);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .media-thumbnail img,.media-thumbnail video{width:100%;height:100%;object-fit:cover}
+    .type-badge{font-size:.65rem;white-space:nowrap;background:rgba(0,0,0,.55);border:1px solid var(--border);padding:.15rem .4rem;border-radius:999px}
+    .media-info{padding:.6rem;display:flex;align-items:center;gap:.5rem;justify-content:space-between}
+    .media-name{font-size:.75rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%}
+    .media-size{font-size:.675rem;color:var(--muted-foreground);margin-top:.2rem}
+    .folder-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:1rem;cursor:grab;transition:all .2s ease;text-align:center;position:relative}
+    .folder-card:hover{transform:translateY(-3px);background:rgba(0,150,200,.08)}
+    .folder-card .kebab{position:absolute;top:.5rem;right:.5rem}
+    .section-title{font-size:.875rem;color:var(--muted-foreground);margin:.25rem 0 .25rem .25rem;font-weight:600}
+    .empty-state{text-align:center;padding:2.2rem 1rem}
+    .hidden{display:none !important}
+    .icon{width:1rem;height:1rem;stroke:currentColor;fill:none;stroke-width:2}
+    .icon-lg{width:1.25rem;height:1.25rem}
+    .toast{position:fixed;bottom:2rem;right:2rem;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:60;display:none}
+    .toast.show{display:block}
+    .pagination{display:flex;justify-content:center;align-items:center;gap:.5rem;margin-top:1rem;flex-wrap:wrap}
+    .page-btn{border:1px solid var(--border);background:transparent;border-radius:8px;padding:.35rem .6rem;color:var(--foreground);cursor:pointer}
+    .page-btn.active{background:var(--primary);border-color:transparent}
+    /* Modal viewer: keep arrows close to media */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(6px);z-index:50;display:none;align-items:center;justify-content:center}
+    .modal-overlay.active{display:flex}
+    .modal-content{max-width:90vw;max-height:86vh;position:relative;display:flex;flex-direction:column;align-items:center}
+    .modal-close{position:fixed;top:16px;right:16px;z-index:80}
+    .modal-controls{display:flex;gap:.75rem;margin-top:.5rem}
+    .modal-media{max-width:100%;max-height:75vh;border-radius:12px}
+  
+.chev{
+  background:transparent;border:none;cursor:pointer;
+  width:1.25rem;height:1.25rem;line-height:1.25rem;
+  display:inline-flex;align-items:center;justify-content:center;
+  margin-right:.25rem;font-size:.95rem;color:var(--muted-foreground);
+}
+.chev:focus{ outline:1px dashed var(--border); outline-offset:2px; }
+.chev-spacer{ display:inline-block;width:1.25rem;height:1.25rem;margin-right:.25rem; }
+</style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo-section">
+        <div class="logo"></div>
+        <div class="title">
+          <h1>Beam Media Library</h1>
+          <p>Explorer with Folders, Drag & Drop, Backup</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="dropdown" id="backupDropdown">
+          <button class="btn btn-outline" onclick="toggleDropdown('backupDropdown')">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Backup
+          </button>
+          <div class="menu" id="backupMenu">
+            <div class="item" onclick="exportBackup()">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Export Backup
+            </div>
+            <div class="item" onclick="document.getElementById('importInput').click()">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Import Backup
+            </div>
+          </div>
+        </div>
+        <!-- Keep a single Upload in header; removed any duplicate top-right upload buttons -->
+        <button class="btn btn-primary" onclick="document.getElementById('uploadInput').click()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          Upload
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="uploadProgress" class="container hidden">
+    <div class="card">
+      <p>Uploading...</p>
+      <div style="width:100%;height:8px;background:var(--bg-muted);border-radius:4px;overflow:hidden;margin-top:.5rem">
+        <div id="progressFill" style="height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .3s ease"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="grid-layout">
+      <aside class="sidebar">
+        <div class="card">
+          <div class="sidebar-header">
+            <h2>Folders</h2>
+            <button class="btn btn-icon btn-sm" onclick="createFolder(null)">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
+          <div class="folder-item ${''}" ondblclick="navigateToFolder(null)" onclick="navigateToFolder(null)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Main Library</span>
+          </div>
+          <div id="folderTree" class="folder-tree"></div>
+        </div>
+      </aside>
+
+      <main>
+        <div class="card">
+          <div class="main-content-header">
+            <div class="breadcrumb">
+              <button id="backBtn" class="btn btn-icon btn-sm hidden" onclick="navigateBack()">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              </button>
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span id="breadcrumbText">Main Library</span>
+            </div>
+            <!-- Search section removed per request -->
+            <div style="display:flex;gap:.5rem">
+              <button class="btn btn-outline btn-sm" onclick="toggleSort()">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M11 5h10M11 9h7M11 13h4M3 17l3 3 3-3M6 18V4"/></svg>
+                <span id="sortLabel">Newest</span>
+              </button>
+              <button class="btn btn-outline btn-sm" id="selectModeBtn" onclick="toggleSelectMode()">Mode: Single</button>
+<button class="btn btn-outline btn-sm hidden" id="selectAllBtn" onclick="selectAll()">Select All</button>
+<button class="btn btn-outline btn-sm" id="renameBtn" onclick="renameSelected()" disabled>Rename</button>
+<button class="btn btn-outline btn-sm" id="deleteBtn" onclick="deleteSelected()" disabled>Delete</button>
+<button class="btn btn-outline btn-sm" onclick="createFolder(state.currentFolderId)">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                New Subfolder
+              </button>
+            </div>
+          </div>
+
+          <div id="subfoldersSection" class="hidden">
+            <h3 class="section-title">Folders</h3>
+            <div id="subfolders" class="media-grid"></div>
+          </div>
+
+          <div id="mediaSection">
+            <h3 class="section-title">Media</h3>
+            <div id="mediaGrid" class="media-grid"></div>
+          </div>
+
+          <div id="pagination" class="pagination hidden"></div>
+
+          <div id="emptyState" class="empty-state">
+            <p style="color:var(--muted-foreground);margin-bottom:.5rem">No media in this folder</p>
+            <p style="font-size:.875rem;color:var(--muted-foreground);margin-bottom:1rem">Upload images or videos to get started</p>
+            <button class="btn btn-primary" onclick="document.getElementById('uploadInput').click()">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Upload Files
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="mediaViewer" class="modal-overlay" aria-hidden="true">
+    <button class="btn btn-outline btn-icon modal-close" onclick="closeViewer()" title="Close">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="modal-content">
+      <div id="viewerContent"></div>
+      <div class="modal-controls">
+        <button class="btn btn-outline btn-sm" onclick="viewPrev()" id="prevMediaBtn">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Back
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="viewNext()" id="nextMediaBtn">
+          Next <svg class="icon" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="closeViewer()">
+          Close
+        </button>
+      </div>
+      <div style="text-align:center;margin-top:.25rem;color:rgba(255,255,255,.75)">
+        <span id="viewerName" style="font-weight:600"></span>
+        <span id="viewerIndex" style="margin-left:.5rem"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <input type="file" id="uploadInput" multiple accept="image/*,video/*" style="display:none" onchange="handleUpload(event)"/>
+  <input type="file" id="importInput" style="display:none" onchange="handleImport(event)"/>
+
+  <script>
+    const STORAGE_KEY='mtp_meta_v6_explorer';
+    const DB_NAME='mtp_media_db'; const STORE_NAME='media';
+    const ITEMS_PER_PAGE=20;
+
+    let state={folders:[],media:[],currentFolderId:null,history:[],sortOrder:'newest',
+  collapsed: {}
+};
+    let currentPage=1; let currentViewIndex=-1; let db=null;
+
+    // --- IndexedDB ---
+    function initDB(){
+      return new Promise((resolve,reject)=>{
+        const req=indexedDB.open(DB_NAME,1);
+        req.onerror=()=>reject(req.error);
+        req.onsuccess=()=>{db=req.result;resolve();};
+        req.onupgradeneeded=(e)=>{
+          const database=e.target.result;
+          if(!database.objectStoreNames.contains(STORE_NAME)){
+            database.createObjectStore(STORE_NAME,{keyPath:'id'});
+          }
+        };
+      });
+    }
+    function addMediaToDB(id,blob){return new Promise((res,rej)=>{const tx=db.transaction([STORE_NAME],'readwrite');tx.objectStore(STORE_NAME).put({id,blob}).onsuccess=()=>res();tx.onerror=()=>rej(tx.error);});}
+    function getMediaFromDB(id){return new Promise((res,rej)=>{const tx=db.transaction([STORE_NAME],'readonly');tx.objectStore(STORE_NAME).get(id).onsuccess=(e)=>res(e.target.result?.blob||null);tx.onerror=()=>rej(tx.error);});}
+    function deleteMediaFromDB(id){return new Promise((res,rej)=>{const tx=db.transaction([STORE_NAME],'readwrite');tx.objectStore(STORE_NAME).delete(id).onsuccess=()=>res();tx.onerror=()=>rej(tx.error);});}
+
+    // --- State ---
+    function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+    function loadState(){try{const s=localStorage.getItem(STORAGE_KEY);if(s){state={...state,...JSON.parse(s)};}}catch{}}
+    function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
+
+function isCollapsed(folderId){ return !!state.collapsed?.[folderId]; }
+function toggleCollapse(folderId, ev){
+  if(ev) ev.stopPropagation();
+  state.collapsed = state.collapsed || {};
+  state.collapsed[folderId] = !state.collapsed[folderId];
+  saveState();
+  renderFolderTree();
+}
+
+    function showToast(msg,ms=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),ms);}
+
+    // --- Dropdowns ---
+    function toggleDropdown(id){
+      const dd=document.getElementById(id);
+      const menu=dd.querySelector('.menu');
+      menu.classList.toggle('show');
+      setTimeout(()=>{
+        const close=(e)=>{if(!dd.contains(e.target)){menu.classList.remove('show');document.removeEventListener('click',close);}}
+        document.addEventListener('click',close);
+      },10);
+    }
+
+    // --- Folders ---
+    function createFolder(parentId){
+      const name=prompt('Folder name:');
+      if(!name||!name.trim()) return;
+      state.folders.push({id:uid(),name:name.trim(),parentId:parentId||null,createdAt:Date.now()});
+      saveState(); render(); showToast('Folder created');
+    }
+    function renameFolder(folderId){
+      const f=state.folders.find(x=>x.id===folderId); if(!f) return;
+      const name=prompt('Rename folder:',f.name);
+      if(!name||!name.trim()) return;
+      f.name=name.trim(); saveState(); render(); showToast('Folder renamed');
+    }
+    function deleteFolder(folderId){
+      if(!confirm('Delete folder and its subfolders and media?')) return;
+      // gather all descendant folders
+      const ids=new Set([folderId]);
+      let changed=true;
+      while(changed){
+        changed=false;
+        for(const f of state.folders){
+          if(f.parentId && ids.has(f.parentId) && !ids.has(f.id)){ids.add(f.id);changed=true;}
+        }
+      }
+      // delete media inside
+      state.media=state.media.filter(m=>!ids.has(m.folderId));
+      // delete folders
+      state.folders=state.folders.filter(f=>!ids.has(f.id));
+      if(ids.has(state.currentFolderId)) state.currentFolderId=null;
+      saveState(); render(); showToast('Folder deleted');
+    }
+    function navigateToFolder(folderId){
+      if(folderId!==state.currentFolderId) state.history.push(state.currentFolderId);
+      state.currentFolderId=folderId; currentPage=1; saveState(); render();
+    }
+    function navigateBack(){ if(state.history.length===0) return; state.currentFolderId=state.history.pop(); currentPage=1; saveState(); render(); }
+
+    // Drag & Drop for media and folders
+    function onMediaDragStart(ev,mediaId){ev.dataTransfer.setData('type','media');ev.dataTransfer.setData('id',mediaId);}
+    function onFolderDragStart(ev,folderId){ev.dataTransfer.setData('type','folder');ev.dataTransfer.setData('id',folderId);}
+    function allowDrop(ev){ev.preventDefault();}
+    function onDropToFolder(ev,targetFolderId){
+      ev.preventDefault();
+      const type=ev.dataTransfer.getData('type'); const id=ev.dataTransfer.getData('id');
+      if(type==='media'){
+        const m=state.media.find(x=>x.id===id); if(!m) return;
+        m.folderId=targetFolderId||null; saveState(); render(); showToast('Media moved');
+      }else if(type==='folder'){
+        if(id===targetFolderId) return;
+        // prevent parenting into own descendant
+        const isDescendant=(childId,ancestorId)=>{
+          let cur=state.folders.find(f=>f.id===childId);
+          while(cur){ if(cur.parentId===ancestorId) return true; cur=state.folders.find(f=>f.id===cur.parentId); }
+          return false;
+        };
+        if(isDescendant(targetFolderId,id)){ showToast('Cannot move folder into its descendant'); return; }
+        const f=state.folders.find(x=>x.id===id); if(!f) return;
+        f.parentId=targetFolderId||null; saveState(); render(); showToast('Folder moved');
+      }
+    }
+
+    // --- Media ---
+    async function handleUpload(e){
+      const files=[...e.target.files]; if(!files.length) return;
+      document.getElementById('uploadProgress').classList.remove('hidden');
+      const valid=['image/jpeg','image/png','image/gif','image/webp','video/mp4','video/webm','video/quicktime','video/x-m4v'];
+      let done=0;
+      for(const file of files){
+        if(!valid.includes(file.type)){showToast('Skipped '+file.name);continue;}
+        const id=uid();
+        await addMediaToDB(id,file);
+        state.media.push({id,name:file.name,type:file.type.startsWith('image')?'image':(file.type.includes('gif')?'gif':'video'),size:file.size,folderId:state.currentFolderId,createdAt:Date.now()});
+        done++; document.getElementById('progressFill').style.width=((done/files.length)*100)+'%';
+      }
+      document.getElementById('uploadProgress').classList.add('hidden');
+      saveState(); render(); showToast(done+' file(s) uploaded'); e.target.value='';
+    }
+    
+// --- Selection and Toolbar ---
+let selectMode = 'single';
+let selectedIds = new Set();
+
+function toggleSelectMode(){
+  selectMode = selectMode==='single'?'multi':'single';
+  document.getElementById('selectModeBtn').textContent = 'Mode: ' + (selectMode==='single'?'Single':'Multi');
+  document.getElementById('selectAllBtn').classList.toggle('hidden', selectMode==='single');
+  selectedIds.clear();
+  updateSelectionUI();
+}
+function selectItem(id,event){
+  event.stopPropagation();
+  if(selectMode==='single'){
+    selectedIds.clear(); selectedIds.add(id);
+  } else {
+    if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+  }
+  updateSelectionUI();
+}
+function selectAll(){
+  const items = state.media.filter(m=>m.folderId===state.currentFolderId);
+  if(selectedIds.size===items.length){selectedIds.clear();}
+  else{items.forEach(m=>selectedIds.add(m.id));}
+  updateSelectionUI();
+}
+function updateSelectionUI(){
+  document.querySelectorAll('.media-item').forEach(el=>{
+    const id = el.dataset.id;
+    el.classList.toggle('selected', selectedIds.has(id));
+  });
+  const renameBtn=document.getElementById('renameBtn');
+  const deleteBtn=document.getElementById('deleteBtn');
+  renameBtn.disabled = selectedIds.size!==1;
+  deleteBtn.disabled = selectedIds.size===0;
+  document.getElementById('selectAllBtn').textContent = (selectedIds.size>0?'Clear All':'Select All');
+}
+async function renameSelected(){
+  if(selectedIds.size!==1) return;
+  const id=[...selectedIds][0];
+  const m=state.media.find(x=>x.id===id);
+  const name=prompt('Rename media:',m.name);
+  if(!name||!name.trim()) return;
+  m.name=name.trim(); saveState(); render();
+}
+async function deleteSelected(){
+  if(selectedIds.size===0) return;
+  if(!confirm('Delete selected media?')) return;
+  for(const id of selectedIds){ await deleteMediaFromDB(id); state.media=state.media.filter(m=>m.id!==id); }
+  selectedIds.clear(); saveState(); render();
+}
+
+async function deleteMedia(mediaId){
+      if(!confirm('Delete this media?')) return;
+      await deleteMediaFromDB(mediaId);
+      state.media=state.media.filter(m=>m.id!==mediaId);
+      saveState(); render(); showToast('Media deleted');
+    }
+
+    function renameMedia(mediaId){
+      const m=state.media.find(x=>x.id===mediaId); if(!m) return;
+      const name=prompt('Rename media:', m.name);
+      if(!name || !name.trim()) return;
+      m.name=name.trim(); saveState(); render(); showToast('Media renamed');
+    }
+
+    function toggleSort(){state.sortOrder=state.sortOrder==='newest'?'oldest':'newest'; saveState(); render();}
+
+    function getFilteredMedia(){
+      // Search removed: only filter by folder
+      let items=state.media.filter(m=>m.folderId===state.currentFolderId);
+      items.sort((a,b)=>state.sortOrder==='newest'?(b.createdAt-a.createdAt):(a.createdAt-b.createdAt));
+      return items;
+    }
+
+    // Viewer
+    async function viewMediaAt(globalIndex){
+      const items=getFilteredMedia();
+      if(globalIndex<0||globalIndex>=items.length) return;
+      currentViewIndex=globalIndex;
+      const m=items[globalIndex];
+      const blob=await getMediaFromDB(m.id); if(!blob){showToast('Media not found');return;}
+      const url=URL.createObjectURL(blob);
+      const content=document.getElementById('viewerContent');
+      if(m.type==='image' || m.type==='gif'){
+        content.innerHTML=`<img class="modal-media" src="${url}" alt="${m.name}">`;
+      }else{
+        content.innerHTML=`<video class="modal-media" src="${url}" controls autoplay></video>`;
+      }
+      document.getElementById('viewerName').textContent=m.name;
+      document.getElementById('viewerIndex').textContent=(currentViewIndex+1)+' of '+items.length;
+      document.getElementById('prevMediaBtn').style.display=currentViewIndex>0?'inline-flex':'none';
+      document.getElementById('nextMediaBtn').style.display=currentViewIndex<items.length-1?'inline-flex':'none';
+      document.getElementById('mediaViewer').classList.add('active');
+    }
+    function closeViewer(){document.getElementById('mediaViewer').classList.remove('active');document.getElementById('viewerContent').innerHTML='';currentViewIndex=-1;}
+    function viewPrev(){ if(currentViewIndex>0) viewMediaAt(currentViewIndex-1); }
+    function viewNext(){ const items=getFilteredMedia(); if(currentViewIndex<items.length-1) viewMediaAt(currentViewIndex+1); }
+    document.addEventListener('keydown',(e)=>{
+      if(!document.getElementById('mediaViewer').classList.contains('active')) return;
+      if(e.key==='Escape') closeViewer();
+      if(e.key==='ArrowLeft') viewPrev();
+      if(e.key==='ArrowRight') viewNext();
+    });
+
+    // --- Backup ---
+    async function exportBackup(){
+      // gather state + blobs (base64)
+      const data={meta:{exportedAt:Date.now()},state:{...state},mediaBlobs:{}};
+      for(const m of state.media){
+        const blob=await getMediaFromDB(m.id);
+        if(blob){
+          const buf=await blob.arrayBuffer();
+          const b64=btoa(String.fromCharCode(...new Uint8Array(buf)));
+          data.mediaBlobs[m.id]={type:blob.type,size:blob.size,b64};
+        }
+      }
+      const json=new Blob([JSON.stringify(data)],{type:'application/json'});
+      const url=URL.createObjectURL(json);
+      const a=document.createElement('a');
+      a.href=url; a.download='beam_media_backup.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      showToast('Backup exported');
+    }
+    async function handleImport(e){
+      const file=e.target.files?.[0]; if(!file) return;
+      try{
+        const txt=await file.text();
+        const data=JSON.parse(txt);
+        if(!data || !data.state || !data.mediaBlobs) throw new Error('Invalid backup');
+        state={...state,...data.state};
+        // restore blobs
+        for(const [id,info] of Object.entries(data.mediaBlobs)){
+          const bytes=Uint8Array.from(atob(info.b64),c=>c.charCodeAt(0));
+          await addMediaToDB(id,new Blob([bytes],{type:info.type||'application/octet-stream'}));
+        }
+        saveState(); render(); showToast('Backup imported');
+      }catch(err){console.error(err);showToast('Import failed');}
+      e.target.value='';
+    }
+
+    // --- Render helpers ---
+    function folderCount(folderId){ return state.media.filter(m=>m.folderId===folderId).length; }
+    function subfoldersOf(parentId){ return state.folders.filter(f=>f.parentId===parentId); }
+
+    function renderFolderTree(){
+      const tree=document.getElementById('folderTree');
+      const roots=state.folders.filter(f=>!f.parentId);
+      const makeNode=(folder,level=0)=>{
+        const indent=`style="padding-left:${(level*12)}px"`;
+        const isActive=folder.id===state.currentFolderId?'active':'';
+        return `<div class="folder-item ${isActive}" ${indent} 
+                    draggable="true" ondragstart="onFolderDragStart(event,'${folder.id}')"
+                    ondragover="allowDrop(event)" ondrop="onDropToFolder(event,'${folder.id}')"
+                    onclick="navigateToFolder('${folder.id}')" ondblclick="navigateToFolder('${folder.id}')">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  <span>${folder.name}</span>
+                  <span style="margin-left:auto;font-size:.75rem;color:var(--muted-foreground)">${folderCount(folder.id)}</span>
+                  <div class="kebab" onclick="event.stopPropagation();">
+                    <button onclick="this.nextElementSibling.classList.toggle('show')">⋯</button>
+                    <div class="menu">
+                      <div class="item" onclick="createFolder('${folder.id}')">+ Subfolder</div>
+                      <div class="item" onclick="renameFolder('${folder.id}')">Rename</div>
+                      <div class="item danger" onclick="deleteFolder('${folder.id}')">Delete</div>
+                    </div>
+                  </div>
+                </div>`
+                + subfoldersOf(folder.id).map(sf=>makeNode(sf,level+1)).join('');
+      };
+      tree.innerHTML = roots.map(r=>makeNode(r,0)).join('');
+    }
+
+    async function render(){
+      // breadcrumb & back
+      const cur=state.folders.find(f=>f.id===state.currentFolderId);
+      document.getElementById('breadcrumbText').textContent = cur?cur.name:'Main Library';
+      document.getElementById('backBtn').classList.toggle('hidden',state.history.length===0);
+      document.getElementById('sortLabel').textContent=state.sortOrder==='newest'?'Newest':'Oldest';
+const hasMedia = state.media.some(m=>m.folderId===state.currentFolderId);
+document.getElementById('selectModeBtn').parentElement.style.display = hasMedia ? 'flex' : 'none';
+
+      // folder tree
+      renderFolderTree();
+
+      // subfolders grid (in current folder)
+      const subs=subfoldersOf(state.currentFolderId);
+      const subsSection=document.getElementById('subfoldersSection');
+      const subsEl=document.getElementById('subfolders');
+      if(subs.length>0){
+        subsSection.classList.remove('hidden');
+        subsEl.innerHTML = subs.map(f=>`
+          <div class="folder-card" draggable="true"
+               ondragstart="onFolderDragStart(event,'${f.id}')"
+               ondragover="allowDrop(event)" ondrop="onDropToFolder(event,'${f.id}')"
+               onclick="navigateToFolder('${f.id}')" ondblclick="navigateToFolder('${f.id}')">
+            <div class="kebab" onclick="event.stopPropagation();">
+              <button onclick="this.nextElementSibling.classList.toggle('show')">⋯</button>
+              <div class="menu">
+                <div class="item" onclick="createFolder('${f.id}')">+ Subfolder</div>
+                <div class="item" onclick="renameFolder('${f.id}')">Rename</div>
+                <div class="item danger" onclick="deleteFolder('${f.id}')">Delete</div>
+              </div>
+            </div>
+            <svg class="icon" style="width:40px;height:40px;color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            <p style="font-weight:700;font-size:.9rem;margin-top:.35rem">${f.name}</p>
+            <p style="font-size:.75rem;color:var(--muted-foreground)">${folderCount(f.id)} items</p>
+          </div>
+        `).join('');
+      } else {
+        subsSection.classList.add('hidden'); subsEl.innerHTML='';
+      }
+
+      // media grid (only media in this folder)
+      const mediaItems=getFilteredMedia();
+      const totalPages=Math.max(1,Math.ceil(mediaItems.length/ITEMS_PER_PAGE));
+      if(currentPage>totalPages) currentPage=totalPages;
+      const start=(currentPage-1)*ITEMS_PER_PAGE;
+      const pageMedia=mediaItems.slice(start,start+ITEMS_PER_PAGE);
+
+      const grid=document.getElementById('mediaGrid');
+      if(pageMedia.length>0){
+        document.getElementById('emptyState').classList.add('hidden');
+        document.getElementById('mediaSection').classList.remove('hidden');
+        const itemHtml = await Promise.all(pageMedia.map(async (m,i)=>{
+          const blob=await getMediaFromDB(m.id);
+          const url=blob?URL.createObjectURL(blob):'';
+          const idx=start+i;
+          const badge = (m.type==='image'?'Photo':(m.type==='gif'?'GIF':'Video'));
+          return `
+            <div class="media-item" data-id="${m.id}" draggable="true" ondragstart="onMediaDragStart(event,'${m.id}')" onclick="selectItem('${m.id}',event)">
+              <div class="media-thumbnail" onclick="viewMediaAt(${idx})">
+                ${url ? (m.type==='image'||m.type==='gif' ? `<img src="${url}" alt="${m.name}">` : `<video src="${url}" muted></video>`) : ''}
+              </div>
+              <div class="media-info">
+                <div style="flex:1;min-width:0">
+                  <div class="media-name" title="${m.name}">${m.name}</div>
+                  <div class="media-size">${(m.size/1024/1024).toFixed(2)} MB</div>
+                </div>
+                <span class="type-badge">${badge}</span>
+                </div>
+</div>
+              </div>
+            </div>`;
+        }));
+        grid.innerHTML=itemHtml.join('');
+      } else {
+        grid.innerHTML='';
+        document.getElementById('mediaSection').classList.toggle('hidden',mediaItems.length===0);
+        document.getElementById('emptyState').classList.toggle('hidden',!(mediaItems.length===0 && subs.length===0));
+      }
+
+      // numeric pagination when > 20
+      const pager=document.getElementById('pagination');
+      if(totalPages>1){
+        pager.classList.remove('hidden');
+        let html='';
+        const makeBtn=(n,label=n)=>`<button class="page-btn ${n===currentPage?'active':''}" onclick="gotoPage(${n})">${label}</button>`;
+        // prev
+        html+=`<button class="page-btn" ${currentPage===1?'disabled':''} onclick="gotoPage(${Math.max(1,currentPage-1)})">Prev</button>`;
+        // numbers with simple window
+        const windowSize=5;
+        let startN=Math.max(1,currentPage-2), endN=Math.min(totalPages,startN+windowSize-1);
+        if(endN-startN<windowSize-1){startN=Math.max(1,endN-windowSize+1);}
+        if(startN>1){html+=makeBtn(1,'1'); if(startN>2) html+=`<span style="padding:0 .25rem">…</span>`;}
+        for(let n=startN;n<=endN;n++){ html+=makeBtn(n,String(n)); }
+        if(endN<totalPages){ if(endN<totalPages-1) html+=`<span style="padding:0 .25rem">…</span>`; html+=makeBtn(totalPages,String(totalPages)); }
+        // next
+        html+=`<button class="page-btn" ${currentPage===totalPages?'disabled':''} onclick="gotoPage(${Math.min(totalPages,currentPage+1)})">Next</button>`;
+        pager.innerHTML=html;
+      } else {
+        pager.classList.add('hidden'); pager.innerHTML='';
+      }
+    }
+
+    function gotoPage(n){currentPage=n; render();}
+
+    // --- Init ---
+    async function init(){await initDB(); loadState(); render();}
+    init();
+  
+function renderFolderTree(){
+  const tree = document.getElementById('folderTree');
+  if(!tree){ return; }
+  const roots = state.folders.filter(f=>!f.parentId);
+
+  const subfoldersOf = (parentId)=> state.folders.filter(f=>f.parentId===parentId);
+
+  const makeNode = (folder, level=0)=>{
+    const indent = `style="padding-left:${(level*12)}px"`;
+    const isActive = folder.id===state.currentFolderId ? 'active' : '';
+    const children  = subfoldersOf(folder.id);
+    const hasKids   = children.length>0;
+    const collapsed = isCollapsed(folder.id);
+
+    const row = `
+      <div class="folder-item ${isActive}" ${indent}
+           draggable="true"
+           ondragstart="onFolderDragStart(event,'${folder.id}')"
+           ondragover="allowDrop(event)"
+           ondrop="onDropToFolder(event,'${folder.id}')"
+           onclick="navigateToFolder('${folder.id}')"
+           ondblclick="navigateToFolder('${folder.id}')">
+
+        ${hasKids
+          ? `<button class="chev" aria-label="Toggle ${collapsed?'expand':'collapse'}"
+                     onclick="toggleCollapse('${folder.id}', event)">${collapsed?'▶️':'▼'}</button>`
+          : `<span class="chev-spacer"></span>`}
+
+        <svg class="icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>${folder.name}</span>
+        <span style="margin-left:auto;font-size:.75rem;color:var(--muted-foreground)">${folderCount(folder.id)}</span>
+
+        <div class="kebab" onclick="event.stopPropagation();">
+          <button onclick="this.nextElementSibling.classList.toggle('show')">⋯</button>
+          <div class="menu">
+            <div class="item" onclick="createFolder('${folder.id}')">+ Subfolder</div>
+            <div class="item" onclick="renameFolder('${folder.id}')">Rename</div>
+            <div class="item danger" onclick="deleteFolder('${folder.id}')">Delete</div>
+          </div>
+        </div>
+      </div>`;
+
+    const kids = hasKids
+      ? `<div class="folder-tree-item" style="display:${collapsed?'none':'block'}">
+           ${children.map(sf=>makeNode(sf, level+1)).join('')}
+         </div>`
+      : '';
+
+    return row + kids;
+  };
+
+  tree.innerHTML = roots.map(r=>makeNode(r,0)).join('');
+}
+</script>
+</body>
+</html>
